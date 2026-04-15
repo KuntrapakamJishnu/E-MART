@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '')
+const API_URL = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'https://campuskartai.onrender.com/api').replace(/\/$/, '')
 
 // Send OTP
 export const sendOtpApi = async ({ email, role }) => {

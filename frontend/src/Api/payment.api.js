@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_BASE_URL = (import.meta.env.VITE_BASE_URL || '').replace(/\/$/, '')
+const API_BASE_URL = (import.meta.env.VITE_BASE_URL || 'https://campuskartai.onrender.com/api').replace(/\/$/, '')
 
 export const createPaymentApi = async(products)=>{
     const res = await axios.post(`${API_BASE_URL}/payment/createPayment`,
