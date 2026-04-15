@@ -1,5 +1,5 @@
 import express from 'express'
-import { approveSeller, getCartItem, getPendingSellers, getUser, login, logout, register, updateProfile } from '../controller/user.controller.js'
+import { approveSeller, getAllUsersForAdmin, getCartItem, getPendingSellers, getRecentLogins, getUser, login, logout, register, removeUserByAdmin, updateProfile } from '../controller/user.controller.js'
 import { adminRoute, protectRoute } from '../middleware/auth.middleware.js'
 import { upload } from '../middleware/upload.image.js'
 
@@ -15,5 +15,8 @@ userRoute.get('/getCartItem', protectRoute, getCartItem)
 userRoute.post('/logout', protectRoute, logout)
 userRoute.get('/admin/pending-sellers', protectRoute, adminRoute, getPendingSellers)
 userRoute.post('/admin/approve-seller/:id', protectRoute, adminRoute, approveSeller)
+userRoute.get('/admin/recent-logins', protectRoute, adminRoute, getRecentLogins)
+userRoute.get('/admin/users', protectRoute, adminRoute, getAllUsersForAdmin)
+userRoute.delete('/admin/users/:id', protectRoute, adminRoute, removeUserByAdmin)
 
 export default userRoute

@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema({
     oauthId: {
         type: String,
         default: null
+    },
+    lastLoginAt: {
+        type: Date,
+        default: null
     }
 }, {timestamps: true});
 

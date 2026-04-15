@@ -16,6 +16,7 @@ const CartPage = lazy(() => import('@/Pages/User/CartPage'))
 const Purchase = lazy(() => import('@/Pages/User/Purchase'))
 const AIAssistant = lazy(() => import('@/Pages/User/AIAssistant'))
 const PlacementReviews = lazy(() => import('@/Pages/User/PlacementReviews'))
+const ContactUs = lazy(() => import('@/Pages/User/ContactUs'))
 
 const PageFallback = () => (
     <div className='min-h-screen flex items-center justify-center bg-slate-950 px-4 text-white'>
@@ -76,6 +77,11 @@ const MainRoutes = () => {
           <Route path='/placements' element={
               <ProtectedRoute>
                   <PlacementReviews/>
+              </ProtectedRoute>
+          }/>
+          <Route path='/contact' element={
+              <ProtectedRoute>
+                  <ContactUs/>
               </ProtectedRoute>
           }/>
 

@@ -1,4 +1,4 @@
-import { approveProductApi, approveSellerApi, getPendingProductsApi, getPendingSellersApi } from '@/Api/admin.api'
+import { approveProductApi, approveSellerApi, deleteUserByAdminApi, getAdminUsersApi, getPendingProductsApi, getPendingSellersApi, getRecentLoginsApi } from '@/Api/admin.api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -13,6 +13,20 @@ export const usePendingProductsHook = () => {
   return useQuery({
     queryKey: ['pending-products'],
     queryFn: getPendingProductsApi
+  })
+}
+
+export const useRecentLoginsHook = () => {
+  return useQuery({
+    queryKey: ['recent-logins'],
+    queryFn: getRecentLoginsApi
+  })
+}
+
+export const useAdminUsersHook = ({ page, limit, search }) => {
+  return useQuery({
+    queryKey: ['admin-users', page, limit, search],
+    queryFn: () => getAdminUsersApi({ page, limit, search })
   })
 }
 
@@ -43,6 +57,23 @@ export const useApproveProductHook = () => {
     },
     onError: (err) => {
       toast.error(err?.response?.data?.message || 'Unable to approve product')
+    }
+  })
+}
+
+export const useDeleteUserByAdminHook = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteUserByAdminApi,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'User removed successfully')
+      queryClient.invalidateQueries({ queryKey: ['recent-logins'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      queryClient.invalidateQueries({ queryKey: ['pending-sellers'] })
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Unable to remove user')
     }
   })
 }

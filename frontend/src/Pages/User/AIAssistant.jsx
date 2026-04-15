@@ -91,7 +91,7 @@ const AIAssistant = () => {
             <div className='rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white/80'>
               <span className='inline-flex items-center gap-2'>
                 <Sparkles className='h-4 w-4 text-fuchsia-300' />
-                Built for VIT Campus space
+                Built for CampusKart
               </span>
             </div>
           </div>

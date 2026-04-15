@@ -123,7 +123,8 @@ export const login = async(req, res)=>{
             })
         }
 
-         const token  = await jwt.sign({userId:user._id}, ENV.JWT_TOKEN)
+                 const token  = await jwt.sign({userId:user._id}, ENV.JWT_TOKEN)
+                 user.lastLoginAt = new Date()
 
        if(user.email===ENV.ADMIN_EMAIL){
         
@@ -310,5 +311,95 @@ export const approveSeller = async (req, res) => {
     } catch (error) {
         console.log(`error from approveSeller, ${error}`)
         return res.status(500).json({ message: 'Unable to approve seller' })
+    }
+}
+
+export const getRecentLogins = async (req, res) => {
+    try {
+        const users = await User.find({
+            lastLoginAt: { $ne: null }
+        })
+            .select('_id name email role isApproved lastLoginAt createdAt owner')
+            .sort({ lastLoginAt: -1 })
+            .limit(50)
+
+        const safeUsers = users.filter((user) => getUserRole(user) !== 'admin')
+
+        return res.status(200).json({
+            count: safeUsers.length,
+            users: safeUsers
+        })
+    } catch (error) {
+        console.log(`error from getRecentLogins, ${error}`)
+        return res.status(500).json({ message: 'Unable to fetch recent logins' })
+    }
+}
+
+export const removeUserByAdmin = async (req, res) => {
+    try {
+        const userIdToDelete = req.params.id
+        const adminId = req.id
+
+        if (String(userIdToDelete) === String(adminId)) {
+            return res.status(400).json({ message: 'Admin cannot remove own account' })
+        }
+
+        const user = await User.findById(userIdToDelete)
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' })
+        }
+
+        if (getUserRole(user) === 'admin' || user.email === ENV.ADMIN_EMAIL || user.owner) {
+            return res.status(400).json({ message: 'Admin account cannot be removed' })
+        }
+
+        await User.findByIdAndDelete(userIdToDelete)
+
+        return res.status(200).json({
+            message: 'User removed successfully'
+        })
+    } catch (error) {
+        console.log(`error from removeUserByAdmin, ${error}`)
+        return res.status(500).json({ message: 'Unable to remove user' })
+    }
+}
+
+export const getAllUsersForAdmin = async (req, res) => {
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1)
+        const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 10))
+        const search = String(req.query.search || '').trim()
+
+        const query = {
+            role: { $ne: 'admin' },
+            owner: { $ne: true }
+        }
+
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ]
+        }
+
+        const [totalUsers, users] = await Promise.all([
+            User.countDocuments(query),
+            User.find(query)
+                .select('_id name email role isApproved createdAt lastLoginAt')
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+        ])
+
+        return res.status(200).json({
+            page,
+            limit,
+            totalUsers,
+            totalPages: Math.max(1, Math.ceil(totalUsers / limit)),
+            users
+        })
+    } catch (error) {
+        console.log(`error from getAllUsersForAdmin, ${error}`)
+        return res.status(500).json({ message: 'Unable to fetch users' })
     }
 }

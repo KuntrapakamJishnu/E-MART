@@ -92,7 +92,8 @@ export const googleAuthCallback = async (req, res) => {
         isApproved: true,
         isVerified: true,
         oauthProvider: 'google',
-        oauthId: decoded.id || decoded.sub || decoded.jti
+        oauthId: decoded.id || decoded.sub || decoded.jti,
+        lastLoginAt: new Date()
       })
 
       // Send welcome email
@@ -106,8 +107,10 @@ export const googleAuthCallback = async (req, res) => {
         if (!user.role) {
           user.role = user.owner ? 'admin' : 'student'
         }
-        await user.save()
       }
+
+      user.lastLoginAt = new Date()
+      await user.save()
     }
 
     // Generate JWT token

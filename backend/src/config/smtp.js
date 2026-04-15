@@ -38,11 +38,11 @@ export const sendOtpEmail = async (email, otp) => {
     const mailOptions = {
       from: ENV.MAIL_FROM || ENV.SMTP_USER,
       to: email,
-      subject: 'Your VIT Campus space OTP',
+      subject: 'Your CampusKart OTP',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px 10px 0 0; color: white; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">VIT Campus space</h1>
+            <h1 style="margin: 0; font-size: 28px;">CampusKart</h1>
             <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">OTP Verification</p>
           </div>
           
@@ -56,7 +56,7 @@ export const sendOtpEmail = async (email, otp) => {
           
           <div style="padding: 20px; background: #f5f5f5; border-top: 1px solid #ddd; border-radius: 0 0 10px 10px; color: #888; font-size: 12px; text-align: center;">
             <p style="margin: 0;">Do not share this code with anyone. We will never ask for your OTP.</p>
-            <p style="margin: 8px 0 0 0;">© 2026 VIT Campus space. All rights reserved.</p>
+            <p style="margin: 8px 0 0 0;">© 2026 CampusKart. All rights reserved.</p>
           </div>
         </div>
       `
@@ -80,7 +80,7 @@ export const sendWelcomeEmail = async (email, name) => {
     const mailOptions = {
       from: ENV.MAIL_FROM || ENV.SMTP_USER,
       to: email,
-      subject: 'Welcome to VIT Campus space',
+      subject: 'Welcome to CampusKart',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px 10px 0 0; color: white; text-align: center;">
@@ -89,7 +89,7 @@ export const sendWelcomeEmail = async (email, name) => {
           
           <div style="padding: 40px 20px; background: #f5f5f5;">
             <p style="color: #333; font-size: 16px; line-height: 1.6;">
-              Thank you for joining <strong>VIT Campus space</strong>. Your account has been successfully created.
+              Thank you for joining <strong>CampusKart</strong>. Your account has been successfully created.
             </p>
             <p style="color: #333; font-size: 16px; line-height: 1.6; margin-top: 20px;">
               You can now start shopping from our premium collection of products curated for students.
@@ -101,7 +101,7 @@ export const sendWelcomeEmail = async (email, name) => {
           </div>
           
           <div style="padding: 20px; background: #f5f5f5; border-top: 1px solid #ddd; border-radius: 0 0 10px 10px; color: #888; font-size: 12px; text-align: center;">
-            <p style="margin: 0;">© 2026 VIT Campus space. All rights reserved.</p>
+            <p style="margin: 0;">© 2026 CampusKart. All rights reserved.</p>
           </div>
         </div>
       `

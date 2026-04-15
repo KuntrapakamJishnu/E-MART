@@ -282,7 +282,7 @@ export const chatWithAI = async (req, res) => {
           .join("\n")
       : "No products available in catalog."
 
-    const prompt = `You are the AI assistant for VIT Campus space.\nYour role: answer product questions accurately and recommend items from the live catalog below.\n\nRules:\n1) Use the catalog data below as source of truth for product names, categories, and prices.\n2) If recommending products, prefer exact catalog names and include price + short reason.\n3) If user asks for budget/category filters, suggest best matching catalog items only.\n4) If no good match exists, clearly say so and suggest the closest alternatives.\n5) Keep answers concise and practical.\n\nLive Catalog:\n${productCatalog}\n\nConversation:\n${compactHistory}\nuser: ${String(message).trim()}\nassistant:`
+    const prompt = `You are the AI assistant for CampusKart.\nYour role: answer product questions accurately and recommend items from the live catalog below.\n\nRules:\n1) Use the catalog data below as source of truth for product names, categories, and prices.\n2) If recommending products, prefer exact catalog names and include price + short reason.\n3) If user asks for budget/category filters, suggest best matching catalog items only.\n4) If no good match exists, clearly say so and suggest the closest alternatives.\n5) Keep answers concise and practical.\n\nLive Catalog:\n${productCatalog}\n\nConversation:\n${compactHistory}\nuser: ${String(message).trim()}\nassistant:`
 
     let reply = ""
     try {

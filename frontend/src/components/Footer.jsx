@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import CompanyLogo from '@/assets/CompanyLogo.png'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -11,9 +12,10 @@ const Footer = () => {
 
       <div className='relative mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8'>
         <div className='mb-10 flex flex-col gap-4 rounded-[32px] border border-white/10 bg-white/5 px-6 py-7 shadow-[0_20px_80px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex-row md:items-center md:justify-between'>
-          <div>
-            <p className='text-xs uppercase tracking-[0.35em] text-fuchsia-300'>VIT Campus space</p>
-            <h3 className='mt-2 text-2xl font-black tracking-tight text-white'>Built to feel expensive.</h3>
+          <div className='flex items-center gap-4'>
+            <div className='h-20 w-20 overflow-hidden rounded-[24px] bg-white shadow-[0_16px_36px_rgba(15,23,42,0.28)] ring-1 ring-white/15 sm:h-24 sm:w-24 md:h-28 md:w-28'>
+              <img src={CompanyLogo} alt='Company logo' className='h-full w-full object-cover' />
+            </div>
           </div>
           <p className='max-w-xl text-sm leading-7 text-slate-300'>
             Premium shopping, bold visuals, and polished interactions across every page of the storefront.
@@ -22,7 +24,7 @@ const Footer = () => {
 
         <div className='grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4'>
           <div>
-            <h3 className='text-lg font-bold text-white mb-4'>VIT Campus space</h3>
+            <h3 className='text-lg font-bold text-white mb-4'>Marketplace</h3>
             <p className='text-sm leading-relaxed mb-4 text-slate-400'>
               Your trusted destination for quality products. We bring you the best shopping experience with great deals and excellent customer service.
             </p>
@@ -148,7 +150,7 @@ const Footer = () => {
 
         <div className='mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 md:flex-row md:items-center md:justify-between'>
           <div className='text-sm text-slate-500'>
-            © {currentYear} VIT Campus space. All rights reserved.
+            © {currentYear} All rights reserved.
           </div>
           <div>
             <ul className='flex flex-wrap gap-6 text-sm'>

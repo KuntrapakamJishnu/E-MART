@@ -1,52 +1,41 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useGetUserCartItemHook } from '@/hooks/user.hook'
-import { useClearCartHook, useRemoveCartItemHook, useUpdateQuantity } from '@/hooks/cart.hook'
 import { useCreatePaymentHook, useCreateSuccessHook } from '@/hooks/payment.hook'
-import { useAiRecommendationsHook } from '@/hooks/ai.hook'
 import { useUserStore } from '@/store/userStore'
-import { ArrowRight, BadgeCheck, CreditCard, ShieldCheck, Sparkles, Star, Truck, WandSparkles } from 'lucide-react'
+import { CheckCircle2, ChevronRight, CreditCard, MapPin, Package, ShieldCheck, Sparkles } from 'lucide-react'
 
 const CartPage = () => {
 	const navigate = useNavigate()
 	const user = useUserStore((state) => state.user)
 	const { data, isLoading } = useGetUserCartItemHook()
-	const { mutate: removeItem } = useRemoveCartItemHook()
-	const { mutate: updateQuantity } = useUpdateQuantity()
-	const { mutate: clearCart, isPending: clearing } = useClearCartHook()
 	const { mutateAsync: createPayment, isPending: creatingOrder } = useCreatePaymentHook()
 	const { mutateAsync: verifyPayment, isPending: verifyingPayment } = useCreateSuccessHook()
+	const [paymentMethod, setPaymentMethod] = useState('cod')
+	const [deliveryInfo, setDeliveryInfo] = useState({
+		firstName: user?.name?.split(' ')?.[0] || '',
+		lastName: user?.name?.split(' ')?.slice(1).join(' ') || '',
+		email: user?.email || '',
+		street: '',
+		city: '',
+		state: '',
+		pincode: '',
+		country: 'India',
+		phone: '',
+	})
 
 	const cartItems = useMemo(() => data?.cartItems || [], [data])
 
-	const recommendationQuery = useMemo(() => {
-		if (!cartItems.length) return ''
-		const hint = cartItems
-			.slice(0, 3)
-			.map((item) => `${item?.product?.category || ''} ${item?.product?.name || ''}`.trim())
-			.filter(Boolean)
-			.join(', ')
-		return hint
-	}, [cartItems])
-
-	const { data: recommendationData, isFetching: loadingUpsells } = useAiRecommendationsHook(recommendationQuery, 4)
-
-	const cartIds = useMemo(
-		() => new Set(cartItems.map((item) => item?.product?._id).filter(Boolean)),
+	const totalAmount = useMemo(
+		() =>
+			cartItems.reduce((sum, item) => {
+				const price = item?.product?.price || 0
+				const quantity = item?.quantity || 0
+				return sum + price * quantity
+			}, 0),
 		[cartItems]
 	)
-
-	const upsellProducts = useMemo(() => {
-		const aiProducts = recommendationData?.products || []
-		return aiProducts.filter((item) => item?._id && !cartIds.has(item._id)).slice(0, 3)
-	}, [recommendationData, cartIds])
-
-	const totalAmount = cartItems.reduce((sum, item) => {
-		const price = item?.product?.price || 0
-		const quantity = item?.quantity || 0
-		return sum + price * quantity
-	}, 0)
 
 	const loadRazorpayScript = () =>
 		new Promise((resolve) => {
@@ -82,8 +71,8 @@ const CartPage = () => {
 				key: orderData.key,
 				amount: orderData.amount,
 				currency: orderData.currency,
-				name: 'VIT Campus space',
-				description: 'Secure checkout for your VIT Campus space order',
+				name: 'E-MART',
+				description: 'Secure checkout',
 				order_id: orderData.orderId,
 				prefill: {
 					name: user?.name || '',
@@ -100,11 +89,6 @@ const CartPage = () => {
 					})
 					navigate('/purchase', { replace: true })
 				},
-				modal: {
-					ondismiss: () => {
-						toast.info('Checkout dismissed')
-					},
-				},
 			}
 
 			const paymentObject = new window.Razorpay(options)
@@ -117,239 +101,204 @@ const CartPage = () => {
 		}
 	}
 
+	const handleDeliveryInput = (event) => {
+		const { name, value } = event.target
+		setDeliveryInfo((prev) => ({ ...prev, [name]: value }))
+	}
+
+	const handlePlaceOrder = () => {
+		const requiredFields = ['firstName', 'email', 'street', 'city', 'state', 'pincode', 'country', 'phone']
+		const isValid = requiredFields.every((field) => deliveryInfo[field]?.trim())
+
+		if (!isValid) {
+			toast.error('Please fill all required delivery fields')
+			return
+		}
+
+		if (paymentMethod === 'cod') {
+			toast.success('Order placed with Cash on Delivery')
+			navigate('/purchase', { replace: true })
+			return
+		}
+
+		handleCheckout()
+	}
+
+	const deliveryCompletion = useMemo(() => {
+		const requiredFields = ['firstName', 'email', 'street', 'city', 'state', 'pincode', 'country', 'phone']
+		const filled = requiredFields.filter((field) => Boolean(deliveryInfo[field]?.trim())).length
+		return Math.round((filled / requiredFields.length) * 100)
+	}, [deliveryInfo])
+
 	if (isLoading) {
-		return <div className='min-h-screen flex items-center justify-center'>Loading cart...</div>
+		return <div className='min-h-screen flex items-center justify-center text-white bg-slate-950'>Loading cart...</div>
+	}
+
+	if (cartItems.length === 0) {
+		return (
+			<div className='min-h-screen bg-slate-950 text-white flex items-center justify-center px-4'>
+				<div className='rounded-2xl border border-white/15 bg-white/5 p-8 text-center backdrop-blur-xl'>
+					<h2 className='text-2xl font-bold'>Your cart is empty</h2>
+					<button
+						type='button'
+						onClick={() => navigate('/product')}
+						className='mt-5 rounded-xl border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold text-white hover:bg-white/15'
+					>
+						Browse Products
+					</button>
+				</div>
+			</div>
+		)
 	}
 
 	return (
 		<div className='min-h-screen bg-slate-950 text-white'>
-			<div className='relative overflow-hidden border-b border-white/10'>
-				<div className='absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(236,72,153,0.22),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(34,211,238,0.2),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.14),_transparent_22%),linear-gradient(180deg,_rgba(2,6,23,1),_rgba(15,23,42,0.96))]' />
-				<div className='absolute -left-20 top-10 h-64 w-64 rounded-full bg-fuchsia-500/20 blur-3xl animate-float-slow' />
-				<div className='absolute right-0 top-24 h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl animate-float-medium' />
-				<div className='absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl animate-glow-pulse' />
-				<div className='relative mx-auto max-w-7xl px-6 py-14 lg:px-10'>
-					<div className='flex flex-col gap-5 md:flex-row md:items-end md:justify-between'>
-						<div className='space-y-3'>
-							<div className='inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 backdrop-blur-xl'>
-								<ShieldCheck className='h-4 w-4 text-emerald-400' />
-								Premium payment experience
-							</div>
-							<h1 className='max-w-3xl text-4xl font-black tracking-[-0.06em] sm:text-5xl lg:text-6xl'>A high-motion checkout built for modern commerce.</h1>
-							<p className='max-w-2xl text-sm leading-7 text-white/70 sm:text-base'>
-								Review your items, move through a cinematic checkout, and open the secure payment modal when you are ready to complete the order.
-							</p>
+			<div className='mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8'>
+				<div className='mb-6 flex flex-col gap-4 rounded-[26px] border border-white/10 bg-white/5 p-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between'>
+					<div>
+						<div className='inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200'>
+							<Sparkles className='h-3.5 w-3.5' />
+							Simple checkout
 						</div>
-						<div className='grid gap-3 text-sm text-white/75 md:min-w-[360px] md:grid-cols-2'>
-							<div className='rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1'>
-								<p className='text-xs uppercase tracking-[0.28em] text-white/45'>Items</p>
-								<p className='mt-2 text-3xl font-black text-white'>{cartItems.length}</p>
-								<p className='mt-2 text-xs text-white/55'>Selected for instant secure payment.</p>
-							</div>
-							<div className='rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1'>
-								<p className='text-xs uppercase tracking-[0.28em] text-white/45'>Total</p>
-								<p className='mt-2 text-3xl font-black text-white'>Rs. {totalAmount}</p>
-								<p className='mt-2 text-xs text-white/55'>Free shipping and instant confirmation.</p>
-							</div>
-						</div>
+						<h1 className='mt-3 text-2xl font-black tracking-[-0.05em] sm:text-3xl'>Cart Checkout</h1>
+						<p className='mt-2 text-sm text-white/60'>Fill the form, choose payment, and place your order in a clean, focused flow.</p>
 					</div>
-					<div className='mt-8 grid gap-3 sm:grid-cols-3'>
-						<div className='glass-panel rounded-[24px] p-4 text-sm text-white/80'>
-							<div className='flex items-center gap-2 text-white'><Star className='h-4 w-4 text-amber-300' /> Studio-grade UI</div>
-							<p className='mt-2 text-white/60'>Glass panels, motion, and layered gradients.</p>
+					<div className='rounded-2xl border border-white/10 bg-white/5 px-4 py-3'>
+						<div className='flex items-center justify-between gap-4 text-sm'>
+							<span className='text-white/60'>Items</span>
+							<span className='font-semibold'>{cartItems.length}</span>
 						</div>
-						<div className='glass-panel rounded-[24px] p-4 text-sm text-white/80'>
-							<div className='flex items-center gap-2 text-white'><WandSparkles className='h-4 w-4 text-cyan-300' /> Fast checkout</div>
-							<p className='mt-2 text-white/60'>A frictionless payment flow with live verification.</p>
-						</div>
-						<div className='glass-panel rounded-[24px] p-4 text-sm text-white/80'>
-							<div className='flex items-center gap-2 text-white'><Truck className='h-4 w-4 text-emerald-300' /> Delivery ready</div>
-							<p className='mt-2 text-white/60'>Built for a polished e-commerce order handoff.</p>
+						<div className='mt-2 flex items-center justify-between gap-4 text-sm'>
+							<span className='text-white/60'>Total</span>
+							<span key={totalAmount} className='animate-[pulse_0.45s_ease-in-out_1] font-semibold text-cyan-100'>
+								Rs. {totalAmount}
+							</span>
 						</div>
 					</div>
 				</div>
-			</div>
 
-			<div className='mx-auto max-w-7xl px-6 py-10 lg:px-10'>
-				{cartItems.length === 0 ? (
-					<div className='glass-panel rounded-[32px] p-10 text-center text-slate-950 shadow-[0_20px_80px_rgba(2,6,23,0.18)]'>
-						<div className='mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 text-white animate-glow-pulse'>
-							<Sparkles className='h-7 w-7' />
+				<div className='grid gap-6 lg:grid-cols-[1.08fr_0.92fr]'>
+					<div className='rounded-[26px] border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_24px_90px_rgba(2,6,23,0.28)]'>
+						<div className='flex items-center gap-3'>
+							<div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-500/15 text-cyan-200'>
+								<MapPin className='h-5 w-5' />
+							</div>
+							<div>
+								<h2 className='text-2xl font-black tracking-tight'>Delivery Information</h2>
+								<p className='text-sm text-white/55'>Just the essentials.</p>
+							</div>
 						</div>
-						<h2 className='mt-5 text-2xl font-black'>Your cart is empty</h2>
-						<p className='mt-3 text-slate-600'>Add premium picks from the product page to unlock a fast, animated checkout flow.</p>
+
+						<div className='mt-5'>
+							<div className='mb-2 flex items-center justify-between text-xs uppercase tracking-[0.24em] text-white/45'>
+								<span>Progress</span>
+								<span>{deliveryCompletion}%</span>
+							</div>
+							<div className='h-2 overflow-hidden rounded-full bg-slate-800'>
+								<div className='h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-500 transition-all duration-500' style={{ width: `${deliveryCompletion}%` }} />
+							</div>
+						</div>
+
+						<div className='mt-5 grid gap-3 sm:grid-cols-2'>
+							<input name='firstName' value={deliveryInfo.firstName} onChange={handleDeliveryInput} placeholder='First name' className='h-11 rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+							<input name='lastName' value={deliveryInfo.lastName} onChange={handleDeliveryInput} placeholder='Last name' className='h-11 rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+						</div>
+						<input name='email' value={deliveryInfo.email} onChange={handleDeliveryInput} placeholder='Email address' className='mt-3 h-11 w-full rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+						<input name='street' value={deliveryInfo.street} onChange={handleDeliveryInput} placeholder='Street address' className='mt-3 h-11 w-full rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+						<div className='mt-3 grid gap-3 sm:grid-cols-2'>
+							<input name='city' value={deliveryInfo.city} onChange={handleDeliveryInput} placeholder='City' className='h-11 rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+							<input name='state' value={deliveryInfo.state} onChange={handleDeliveryInput} placeholder='State' className='h-11 rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+						</div>
+						<div className='mt-3 grid gap-3 sm:grid-cols-2'>
+							<input name='pincode' value={deliveryInfo.pincode} onChange={handleDeliveryInput} placeholder='Pincode' className='h-11 rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+							<input name='country' value={deliveryInfo.country} onChange={handleDeliveryInput} placeholder='Country' className='h-11 rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
+						</div>
+						<input name='phone' value={deliveryInfo.phone} onChange={handleDeliveryInput} placeholder='Phone number' className='mt-3 h-11 w-full rounded-xl border border-white/10 bg-slate-900/75 px-3 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20' />
 					</div>
-				) : (
-					<div className='space-y-6'>
-						{(loadingUpsells || upsellProducts.length > 0) && (
-							<div className='glass-panel rounded-[28px] p-5 text-slate-950'>
-								<div className='flex items-center justify-between gap-3'>
-									<div>
-										<p className='text-xs uppercase tracking-[0.28em] text-slate-400'>AI upsell</p>
-										<h3 className='mt-1 text-xl font-black'>You may also like</h3>
-									</div>
-									<button
-										type='button'
-										onClick={() => navigate('/ai-assistant')}
-										className='rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white'
-									>
-										Open AI Studio
-									</button>
-								</div>
 
-								{loadingUpsells ? (
-									<p className='mt-4 text-sm text-slate-500'>Loading smart picks for your cart...</p>
-								) : (
-									<div className='mt-4 grid gap-3 md:grid-cols-3'>
-										{upsellProducts.map((item) => (
-											<div key={item._id} className='rounded-2xl border border-slate-200 bg-white p-3'>
-												<div className='flex items-center gap-3'>
-													<div className='h-14 w-14 overflow-hidden rounded-xl bg-slate-100'>
-														<img src={item.imageUrl} alt={item.name} className='h-full w-full object-cover' loading='lazy' decoding='async' />
-													</div>
-													<div className='min-w-0 flex-1'>
-														<p className='truncate text-sm font-semibold text-slate-900'>{item.name}</p>
-														<p className='text-xs text-slate-500'>{item.category} • Rs. {item.price}</p>
-													</div>
-												</div>
-												<button
-													type='button'
-													onClick={() => navigate(`/product/${item._id}`)}
-													className='mt-3 w-full rounded-xl bg-slate-950 px-3 py-2 text-xs font-semibold text-white'
-												>
-													View Product
-												</button>
-											</div>
-										))}
-									</div>
-								)}
+					<div className='rounded-[26px] border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_24px_90px_rgba(2,6,23,0.28)] lg:sticky lg:top-28'>
+						<div className='flex items-center gap-3'>
+							<div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-fuchsia-500/15 text-fuchsia-200'>
+								<CreditCard className='h-5 w-5' />
 							</div>
-						)}
-
-						<div className='grid gap-8 lg:grid-cols-[1.35fr_0.65fr]'>
-						<div className='space-y-4'>
-							<div className='glass-panel rounded-[28px] p-5 text-slate-950'>
-								<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-									<div>
-										<p className='text-xs uppercase tracking-[0.28em] text-slate-400'>Cart overview</p>
-										<h2 className='mt-1 text-2xl font-black text-slate-950'>Selected items</h2>
-									</div>
-									<div className='inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white'>
-										<BadgeCheck className='h-4 w-4 text-emerald-400' />
-										Verified secure flow
-									</div>
-								</div>
+							<div>
+								<h2 className='text-2xl font-black tracking-tight'>Cart Totals</h2>
+								<p className='text-sm text-white/55'>Simple and clear.</p>
 							</div>
-							{cartItems.map((item) => (
-								<div key={item?.product?._id} className='group glass-panel rounded-[28px] p-5 text-slate-950 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_70px_rgba(15,23,42,0.18)]'>
-									<div className='flex flex-col gap-5 md:flex-row md:items-center md:justify-between'>
-										<div className='flex items-center gap-4'>
-											<div className='flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-[1.03]'>
-												<img
-													src={item?.product?.imageUrl || 'https://via.placeholder.com/240x240?text=E-Mart'}
-													alt={item?.product?.name || 'Product'}
-													className='h-full w-full object-cover'
-													loading='lazy'
-													decoding='async'
-												/>
-											</div>
-											<div>
-												<p className='text-xs uppercase tracking-[0.28em] text-slate-400'>Selected item</p>
-												<h2 className='mt-1 text-xl font-bold text-slate-950'>{item?.product?.name}</h2>
-												<p className='mt-1 max-w-xl text-sm leading-6 text-slate-500 line-clamp-2'>{item?.product?.description}</p>
-												<p className='mt-2 text-sm font-semibold text-slate-700'>Rs. {item?.product?.price || 0}</p>
-											</div>
-										</div>
-
-										<div className='flex flex-wrap items-center gap-3'>
-											<div className='flex items-center rounded-full border border-slate-200 bg-white p-1 shadow-sm'>
-												<button
-													type='button'
-													onClick={() => updateQuantity({ operation: 'decrease', productId: item?.product?._id })}
-													className='flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-slate-700 transition-colors hover:bg-slate-100'
-												>
-													−
-												</button>
-												<span className='min-w-10 text-center text-sm font-bold text-slate-950'>{item?.quantity || 0}</span>
-												<button
-													type='button'
-													onClick={() => updateQuantity({ operation: 'increase', productId: item?.product?._id })}
-													className='flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-slate-700 transition-colors hover:bg-slate-100'
-												>
-													+
-												</button>
-											</div>
-
-											<button
-												type='button'
-												onClick={() => removeItem({ productId: item?.product?._id })}
-												className='rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100'
-											>
-												Remove
-											</button>
-										</div>
-									</div>
-								</div>
-							))}
 						</div>
 
-						<div className='space-y-4'>
-							<div className='glass-panel sticky top-28 rounded-[32px] p-6 text-slate-950'>
-								<div className='flex items-center gap-3'>
-											<div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white animate-glow-pulse'>
-										<CreditCard className='h-5 w-5' />
-									</div>
-									<div>
-										<p className='text-xs uppercase tracking-[0.28em] text-slate-400'>Checkout summary</p>
-												<h3 className='text-xl font-black'>Ready to pay</h3>
-									</div>
+						<div className='mt-5 rounded-2xl border border-white/10 bg-slate-900/60 p-4'>
+							<div className='space-y-3'>
+								<div className='flex items-center justify-between text-sm text-white/70'>
+									<span>Subtotal</span>
+									<span>Rs. {totalAmount}</span>
 								</div>
-
-										<div className='mt-6 space-y-3 rounded-[24px] bg-slate-50 p-4'>
-									<div className='flex items-center justify-between text-sm text-slate-500'>
-										<span>Subtotal</span>
-										<span>Rs. {totalAmount}</span>
-									</div>
-									<div className='flex items-center justify-between text-sm text-slate-500'>
-										<span>Shipping</span>
-										<span>Free</span>
-									</div>
-									<div className='flex items-center justify-between border-t border-slate-200 pt-3 text-lg font-black text-slate-950'>
-										<span>Total</span>
-										<span>Rs. {totalAmount}</span>
-									</div>
+								<div className='flex items-center justify-between text-sm text-white/70'>
+									<span>Delivery Fee</span>
+									<span>Rs. 0</span>
 								</div>
-
-								<div className='mt-6 space-y-3'>
-									<button
-										type='button'
-										onClick={handleCheckout}
-										disabled={creatingOrder || verifyingPayment}
-												className='inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[length:200%_200%] bg-gradient-to-r from-slate-950 via-fuchsia-600 to-cyan-500 px-5 text-sm font-semibold text-white transition-transform duration-300 animate-sweep hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70'
-									>
-												{creatingOrder || verifyingPayment ? 'Processing...' : 'Complete secure checkout'}
-										<Sparkles className='h-4 w-4' />
-									</button>
-									<button
-										type='button'
-										onClick={() => clearCart()}
-										disabled={clearing}
-										className='inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-60'
-									>
-										Clear Cart
-									</button>
-								</div>
-
-										<div className='mt-6 grid gap-3 text-sm text-slate-500'>
-											<div className='flex items-center gap-2'><BadgeCheck className='h-4 w-4 text-emerald-500' /> Payment confirmation and order verification</div>
-											<div className='flex items-center gap-2'><ShieldCheck className='h-4 w-4 text-cyan-500' /> Secure callback and cart clearing</div>
-											<div className='flex items-center gap-2'><ArrowRight className='h-4 w-4 text-fuchsia-500' /> Redirects to a polished success page</div>
+								<div className='flex items-center justify-between border-t border-white/10 pt-3 text-lg font-black'>
+									<span>Total</span>
+									<span>Rs. {totalAmount}</span>
 								</div>
 							</div>
 						</div>
+
+						<div className='mt-5 rounded-2xl border border-white/10 bg-slate-900/50 p-4'>
+							<div className='flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/45'>
+								<Package className='h-3.5 w-3.5' />
+								Items in cart
+							</div>
+							<div className='mt-3 space-y-3'>
+								{cartItems.slice(0, 3).map((item) => (
+									<div key={item?.product?._id} className='flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2'>
+										<div className='min-w-0'>
+											<p className='truncate text-sm font-medium text-white'>{item?.product?.name}</p>
+											<p className='text-xs text-white/50'>Qty {item?.quantity || 0}</p>
+										</div>
+										<p className='text-sm font-semibold text-white/80'>Rs. {(item?.product?.price || 0) * (item?.quantity || 0)}</p>
+									</div>
+								))}
+							</div>
+						</div>
+
+						<h3 className='mt-5 text-xl font-bold tracking-tight'>Payment Method</h3>
+						<div className='mt-3 space-y-3'>
+							<button
+								type='button'
+								onClick={() => setPaymentMethod('cod')}
+								className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-base font-medium transition-all duration-300 ${paymentMethod === 'cod' ? 'border-orange-300 bg-orange-500/10 text-orange-200 shadow-[0_10px_25px_rgba(249,115,22,0.12)]' : 'border-white/10 bg-white/5 text-white/80 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/10'}`}
+							>
+								<span>COD (Cash on delivery)</span>
+								<span className={`h-3 w-3 rounded-full ${paymentMethod === 'cod' ? 'bg-orange-300' : 'bg-white/35'}`} />
+							</button>
+
+							<button
+								type='button'
+								onClick={() => setPaymentMethod('razorpay')}
+								className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-base font-medium transition-all duration-300 ${paymentMethod === 'razorpay' ? 'border-cyan-300 bg-cyan-500/10 text-cyan-200 shadow-[0_10px_25px_rgba(34,211,238,0.12)]' : 'border-white/10 bg-white/5 text-white/80 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/10'}`}
+							>
+								<span>Razorpay (UPI / Card)</span>
+								<span className={`h-3 w-3 rounded-full ${paymentMethod === 'razorpay' ? 'bg-cyan-300' : 'bg-white/35'}`} />
+							</button>
+						</div>
+
+						<button
+							type='button'
+							onClick={handlePlaceOrder}
+							disabled={creatingOrder || verifyingPayment}
+							className='mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(249,115,22,0.22)] transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70'
+						>
+							{creatingOrder || verifyingPayment ? 'Processing...' : 'Place Order'}
+							<ChevronRight className='h-4 w-4' />
+						</button>
+
+						<div className='mt-4 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/45'>
+							<ShieldCheck className='h-3.5 w-3.5 text-cyan-300' />
+							Secure and simple checkout
 						</div>
 					</div>
-					)}
+				</div>
 			</div>
 		</div>
 	)

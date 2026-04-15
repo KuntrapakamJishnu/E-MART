@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { useUserStore } from '@/store/userStore'
-import { CheckCircle2, Clock3, Package, ShieldCheck, UserCheck } from 'lucide-react'
-import { useApproveProductHook, useApproveSellerHook, usePendingProductsHook, usePendingSellersHook } from '@/hooks/admin.hook'
+import { CheckCircle2, Clock3, Package, Search, ShieldCheck, Trash2, UserCheck, Users, X } from 'lucide-react'
+import { useAdminUsersHook, useApproveProductHook, useApproveSellerHook, useDeleteUserByAdminHook, usePendingProductsHook, usePendingSellersHook, useRecentLoginsHook } from '@/hooks/admin.hook'
 
 const StatCard = ({ label, value, icon: Icon, tone }) => {
   return (
@@ -22,14 +22,45 @@ const StatCard = ({ label, value, icon: Icon, tone }) => {
 const ApprovalDashboard = () => {
   const user = useUserStore((state) => state.user)
   const role = user?.role || (user?.owner ? 'admin' : 'student')
+  const [activeUserTab, setActiveUserTab] = useState('recent')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [pendingDeleteUser, setPendingDeleteUser] = useState(null)
 
   const { data: sellersData, isLoading: sellersLoading } = usePendingSellersHook()
   const { data: productsData, isLoading: productsLoading } = usePendingProductsHook()
+  const { data: recentLoginsData, isLoading: recentLoginsLoading } = useRecentLoginsHook()
+  const { data: allUsersData, isLoading: allUsersLoading } = useAdminUsersHook({
+    page,
+    limit: 10,
+    search: searchTerm
+  })
   const { mutate: approveSeller, isPending: approvingSeller } = useApproveSellerHook()
   const { mutate: approveProduct, isPending: approvingProduct } = useApproveProductHook()
+  const { mutate: deleteUser, isPending: deletingUser } = useDeleteUserByAdminHook()
 
   const sellers = sellersData?.sellers || []
   const products = productsData?.products || []
+  const recentUsers = recentLoginsData?.users || []
+  const allUsers = allUsersData?.users || []
+  const totalUsers = allUsersData?.totalUsers || 0
+  const totalPages = allUsersData?.totalPages || 1
+
+  const usersToRender = useMemo(() => {
+    return activeUserTab === 'recent' ? recentUsers : allUsers
+  }, [activeUserTab, recentUsers, allUsers])
+
+  const usersLoading = activeUserTab === 'recent' ? recentLoginsLoading : allUsersLoading
+
+  const handleDeleteUser = () => {
+    if (!pendingDeleteUser?._id) return
+
+    deleteUser(pendingDeleteUser._id, {
+      onSuccess: () => {
+        setPendingDeleteUser(null)
+      }
+    })
+  }
 
   if (role !== 'admin') {
     return (
@@ -58,9 +89,10 @@ const ApprovalDashboard = () => {
           <p className='mt-2 text-sm text-white/70'>Review seller onboarding requests and approve products before they go live.</p>
         </div>
 
-        <div className='mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3'>
+        <div className='mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4'>
           <StatCard label='Pending Sellers' value={sellers.length} icon={UserCheck} tone='from-cyan-500 to-blue-500' />
           <StatCard label='Pending Products' value={products.length} icon={Package} tone='from-fuchsia-500 to-rose-500' />
+          <StatCard label='Recent Logins' value={recentUsers.length} icon={Users} tone='from-emerald-500 to-teal-500' />
           <StatCard label='Total Pending' value={sellers.length + products.length} icon={Clock3} tone='from-amber-500 to-orange-500' />
         </div>
 
@@ -133,7 +165,140 @@ const ApprovalDashboard = () => {
             </div>
           </section>
         </div>
+
+        <section className='mt-6 rounded-[30px] border border-white/15 bg-white/95 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
+          <h2 className='text-xl font-black tracking-[-0.03em] text-slate-900'>Newly Logged-In Users</h2>
+          <p className='mt-1 text-sm text-slate-500'>Track recently logged-in users or browse all users with search and pagination.</p>
+
+          <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='inline-flex rounded-xl border border-slate-200 bg-white p-1'>
+              <button
+                onClick={() => setActiveUserTab('recent')}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${activeUserTab === 'recent' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+              >
+                Recent Logins
+              </button>
+              <button
+                onClick={() => setActiveUserTab('all')}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${activeUserTab === 'all' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+              >
+                All Users
+              </button>
+            </div>
+
+            {activeUserTab === 'all' && (
+              <div className='relative w-full sm:w-[320px]'>
+                <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400' />
+                <input
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    setPage(1)
+                  }}
+                  placeholder='Search by name or email'
+                  className='h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-200'
+                />
+              </div>
+            )}
+          </div>
+
+          <div className='mt-4 space-y-3'>
+            {usersLoading ? (
+              <p className='text-sm text-slate-500'>Loading users...</p>
+            ) : usersToRender.length === 0 ? (
+              <p className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600'>
+                {activeUserTab === 'recent' ? 'No recent logins found.' : 'No users found for this search.'}
+              </p>
+            ) : (
+              usersToRender.map((account) => (
+                <article key={account._id} className='rounded-2xl border border-slate-200 bg-slate-50 p-4'>
+                  <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                      <p className='text-base font-bold text-slate-900'>{account.name}</p>
+                      <p className='mt-1 text-sm text-slate-600'>{account.email}</p>
+                      <p className='mt-1 text-xs text-slate-500'>Role: {account.role} • Approved: {account.isApproved ? 'Yes' : 'No'}</p>
+                      <p className='mt-1 text-xs text-slate-400'>Last Login: {account.lastLoginAt ? new Date(account.lastLoginAt).toLocaleString() : 'Never'}</p>
+                    </div>
+                    <button
+                      onClick={() => setPendingDeleteUser(account)}
+                      disabled={deletingUser}
+                      className='inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60'
+                    >
+                      <Trash2 className='h-4 w-4' />
+                      Remove User
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          {activeUserTab === 'all' && totalPages > 1 && (
+            <div className='mt-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
+              <p className='text-sm text-slate-600'>
+                Page {page} of {totalPages} • {totalUsers} users
+              </p>
+              <div className='inline-flex items-center gap-2'>
+                <button
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={page === 1}
+                  className='rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50'
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={page === totalPages}
+                  className='rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50'
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
+
+      {pendingDeleteUser && (
+        <div className='fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/70 px-4'>
+          <div className='w-full max-w-md rounded-3xl border border-white/15 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.35)]'>
+            <div className='flex items-start justify-between gap-4'>
+              <div>
+                <p className='text-xs font-semibold uppercase tracking-[0.26em] text-rose-500'>Confirm Removal</p>
+                <h3 className='mt-2 text-xl font-black tracking-[-0.03em] text-slate-900'>Remove this user?</h3>
+                <p className='mt-2 text-sm text-slate-600'>
+                  This will permanently delete <span className='font-semibold text-slate-900'>{pendingDeleteUser.name}</span> ({pendingDeleteUser.email}).
+                </p>
+              </div>
+              <button
+                onClick={() => setPendingDeleteUser(null)}
+                className='rounded-lg border border-slate-200 p-1.5 text-slate-500 transition hover:bg-slate-100'
+                aria-label='Close'
+              >
+                <X className='h-4 w-4' />
+              </button>
+            </div>
+
+            <div className='mt-6 flex items-center justify-end gap-3'>
+              <button
+                onClick={() => setPendingDeleteUser(null)}
+                disabled={deletingUser}
+                className='rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                disabled={deletingUser}
+                className='inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60'
+              >
+                <Trash2 className='h-4 w-4' />
+                {deletingUser ? 'Removing...' : 'Yes, Remove User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
