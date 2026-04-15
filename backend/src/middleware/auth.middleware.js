@@ -6,6 +6,20 @@
 import jwt from 'jsonwebtoken'
 import { ENV } from '../config/env.js'
 import User from '../model/user.model.js'
+
+const getRoleFromUser = (user) => {
+    if (!user) return 'student'
+    if (user.role) return user.role
+    if (user.owner) return 'admin'
+    if (user.email === ENV.ADMIN_EMAIL) return 'admin'
+    return 'student'
+}
+
+const isAdminUser = (user) => {
+    if (!user) return false
+    return getRoleFromUser(user) === 'admin' || user.email === ENV.ADMIN_EMAIL
+}
+
 export const protectRoute =async(req ,res, next)=>{
     try {
         const token = req.cookies.token
@@ -26,6 +40,15 @@ export const protectRoute =async(req ,res, next)=>{
         }
 
         req.id = decode.userId
+
+        const user = await User.findById(req.id)
+        if (!user) {
+            return res.status(401).json({
+                message: "User not found"
+            })
+        }
+
+        req.user = user
         next()
     } catch (error) {
         console.error(`error from protect middleware:`, error);
@@ -34,14 +57,7 @@ export const protectRoute =async(req ,res, next)=>{
 }
 
 export const adminRoute = async(req,res, next)=>{
-    const userId = req.id
-    if(!userId){
-        return res.status(401).json({
-            message:"Please login as an Admin"
-        })
-    }
-
-    const user = await User.findById(userId)
+    const user = req.user || (req.id ? await User.findById(req.id) : null)
 
     if(!user){
         return res.status(401).json({
@@ -49,11 +65,49 @@ export const adminRoute = async(req,res, next)=>{
         })
     }
 
-    if(user.email===ENV.ADMIN_EMAIL){
+    if(isAdminUser(user)){
         next()
     } else{
         return res.status(401).json({
             message:"Access denied, Amin Only"
         })
     }
+}
+
+export const sellerOrAdminRoute = async (req, res, next) => {
+    const user = req.user || (req.id ? await User.findById(req.id) : null)
+
+    if (!user) {
+        return res.status(401).json({ message: 'Please login first' })
+    }
+
+    const role = getRoleFromUser(user)
+    if (role !== 'seller' && !isAdminUser(user)) {
+        return res.status(403).json({ message: 'Access denied. Seller or Admin only' })
+    }
+
+    next()
+}
+
+export const approvedSellerOrAdminRoute = async (req, res, next) => {
+    const user = req.user || (req.id ? await User.findById(req.id) : null)
+
+    if (!user) {
+        return res.status(401).json({ message: 'Please login first' })
+    }
+
+    if (isAdminUser(user)) {
+        return next()
+    }
+
+    const role = getRoleFromUser(user)
+    if (role !== 'seller') {
+        return res.status(403).json({ message: 'Access denied. Seller only' })
+    }
+
+    if (!user.isApproved) {
+        return res.status(403).json({ message: 'Seller profile is pending admin approval' })
+    }
+
+    next()
 }

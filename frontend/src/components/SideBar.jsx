@@ -1,15 +1,20 @@
 // SideBar.jsx
-import { Home, LayoutDashboard, Package, ShieldCheck, Sparkles } from 'lucide-react'
+import { CheckCircle2, Home, LayoutDashboard, Package, ShieldCheck, Sparkles } from 'lucide-react'
 import React from 'react'
+import { useUserStore } from '@/store/userStore'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const SideBar = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const user = useUserStore((state) => state.user)
+  const role = user?.role || (user?.owner ? 'admin' : 'student')
+  const isAdmin = role === 'admin'
 
   const menuItems = [
     { label: 'Home', icon: Home, path: '/' },
-    { label: 'Analytics', icon: LayoutDashboard, path: '/dashboard' },
+    ...(isAdmin ? [{ label: 'Analytics', icon: LayoutDashboard, path: '/dashboard' }] : []),
+    ...(isAdmin ? [{ label: 'Approvals', icon: CheckCircle2, path: '/dashboard/approvals' }] : []),
     { label: 'Products', icon: Package, path: '/dashboard/product' }
   ]
 
@@ -27,10 +32,12 @@ const SideBar = () => {
         <div className='mb-8 rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-xl'>
           <p className='inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/60'>
             <ShieldCheck className='h-4 w-4 text-emerald-400' />
-            Admin Suite
+            {isAdmin ? 'Admin Suite' : 'Seller Suite'}
           </p>
           <h2 className='mt-2 text-2xl font-black tracking-[-0.04em] text-white'>Dashboard</h2>
-          <p className='mt-1 text-xs text-white/60'>Control commerce, products, and analytics.</p>
+          <p className='mt-1 text-xs text-white/60'>
+            {isAdmin ? 'Control commerce, products, and analytics.' : 'Manage your products and selling workflow.'}
+          </p>
         </div>
         
         <nav className='space-y-2'>

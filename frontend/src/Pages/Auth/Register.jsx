@@ -26,7 +26,7 @@ const Register = () => {
 
     const handleSendOtp = (data) => {
         setFormData(data)
-        sendOtp(data.email, {
+        sendOtp({ email: data.email, role: data.role }, {
             onSuccess: () => {
                 setStep(2)
                 setResendTimer(60)
@@ -41,7 +41,8 @@ const Register = () => {
             email: formData.email,
             otp: data.otp,
             name: formData.name,
-            password: formData.password
+            password: formData.password,
+            role: formData.role
         }, {
             onSuccess: () => {
                 setStep(1)
@@ -118,6 +119,18 @@ const Register = () => {
                                         className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/30 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-sky-300/85 focus:bg-slate-900/45 focus:ring-2 focus:ring-sky-500/30'
                                         {...register('name', { required: true })}
                                     />
+                                </div>
+
+                                <div>
+                                    <label className='mb-2 block text-xs font-semibold uppercase tracking-[0.28em] text-white/45'>Account Type</label>
+                                    <select
+                                        className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/30 px-4 text-sm text-white outline-none transition focus:border-sky-300/85 focus:bg-slate-900/45 focus:ring-2 focus:ring-sky-500/30'
+                                        {...register('role', { required: true })}
+                                        defaultValue='student'
+                                    >
+                                        <option value='student' className='text-slate-900'>Student Buyer</option>
+                                        <option value='seller' className='text-slate-900'>Seller</option>
+                                    </select>
                                 </div>
 
                                 <div>

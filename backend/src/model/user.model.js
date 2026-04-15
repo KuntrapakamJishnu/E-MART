@@ -19,6 +19,15 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    role: {
+        type: String,
+        enum: ['student', 'seller', 'admin'],
+        default: 'student'
+    },
+    isApproved: {
+        type: Boolean,
+        default: true
+    },
     profilePhoto: {
         type: String
     },
@@ -64,6 +73,7 @@ const userSchema = new mongoose.Schema({
 
 // Create index for OAuth provider and ID
 userSchema.index({ oauthProvider: 1, oauthId: 1 }, { sparse: true });
+userSchema.index({ role: 1, isApproved: 1 });
  
 const User = mongoose.model("User", userSchema);
 

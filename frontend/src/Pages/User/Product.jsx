@@ -2,7 +2,7 @@ import AllProducts from '@/components/AllProducts'
 import FilterProduct from '@/components/FliterProduct'
 import ProductSearchBar from '@/components/ProductSearchBar'
 import React, { useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Boxes } from 'lucide-react'
 
 const Product = () => {
   const [page, setpage] = useState(1)
@@ -60,10 +60,13 @@ const Product = () => {
         <div className='w-full min-w-0'>
           <div className='mb-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm shadow-[0_16px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl'>
             <span className='inline-flex items-center gap-2 font-semibold text-slate-700'>
-              <Sparkles className='h-4 w-4 text-fuchsia-500' />
-              Curated Product Results
+              <Boxes className='h-4 w-4 text-fuchsia-500' />
+              All Products
             </span>
-            <span className='text-slate-500'>Category: {category || 'All'} {activeSearch ? `• "${activeSearch}"` : ''}</span>
+            <span className='text-slate-500'>
+              Category: {category || 'All'}
+              {activeSearch ? ` • AI search: "${activeSearch}"` : ''}
+            </span>
           </div>
           <AllProducts
             page={page}

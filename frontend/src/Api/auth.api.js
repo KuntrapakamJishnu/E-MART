@@ -3,9 +3,9 @@ import axios from 'axios'
 const API_URL = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '')
 
 // Send OTP
-export const sendOtpApi = async (email) => {
+export const sendOtpApi = async ({ email, role }) => {
   try {
-    const response = await axios.post(`${API_URL}/auth/otp/send`, { email })
+    const response = await axios.post(`${API_URL}/auth/otp/send`, { email, role })
     return response.data
   } catch (error) {
     throw error

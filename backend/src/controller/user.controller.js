@@ -16,9 +16,31 @@ const clearCookieOptions = {
     sameSite: 'lax',
     secure: false,
 }
+
+const getUserRole = (user) => {
+    if (user?.role) return user.role
+    if (user?.owner) return 'admin'
+    if (user?.email === ENV.ADMIN_EMAIL) return 'admin'
+    return 'student'
+}
+
+const buildUserPayload = (user) => ({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    profilePhoto: user.profilePhoto,
+    profilePicture: user.profilePicture,
+    cartItems: user.cartItems,
+    owner: user.owner,
+    role: getUserRole(user),
+    isApproved: Boolean(user.isApproved)
+})
+
 export const register =async(req ,res)=>{
     try {
         const {name, password, email} = req.body;
+        const normalizedRole = String(req.body?.role || 'student').toLowerCase()
+        const role = normalizedRole === 'seller' ? 'seller' : 'student'
 
         if(!name || !password || !email){
             return res.status(401).json({
@@ -40,21 +62,32 @@ export const register =async(req ,res)=>{
         const user = await User.create({
             name, 
             email,
-            password:hashPassword
+            password:hashPassword,
+            role,
+            isApproved: role === 'seller' ? false : true
         })
+
+        if (user.email === ENV.ADMIN_EMAIL) {
+            user.owner = true
+            user.role = 'admin'
+            user.isApproved = true
+            await user.save()
+        }
 
         const token  = await jwt.sign({userId:user._id}, ENV.JWT_TOKEN)
 
+        const sellerPendingApproval = getUserRole(user) === 'seller' && !user.isApproved
+
+        if (sellerPendingApproval) {
+            return res.status(201).json({
+                message: `welcome ${user.name}. Your seller profile is pending admin approval.`,
+                user: buildUserPayload(user)
+            })
+        }
+
         return res.status(201).cookie("token",token,authCookieOptions).json({
             message:`welcome ${user.name}`,
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                profilePhoto: user.profilePhoto,
-                cartItems: user.cartItems,
-                owner: user.owner
-            }
+            user: buildUserPayload(user)
         })
         
     } catch (error) {
@@ -95,30 +128,25 @@ export const login = async(req, res)=>{
        if(user.email===ENV.ADMIN_EMAIL){
         
         user.owner = true;
+        user.role = 'admin';
+        user.isApproved = true;
         await user.save()
         return res.status(201).cookie("token",token,authCookieOptions).json({
             message:`welcome back Admin ${user.name}`,
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                profilePhoto: user.profilePhoto,
-                cartItems: user.cartItems,
-                owner: user.owner
-            }
+            user: buildUserPayload(user)
         })
        }
 
+    const role = getUserRole(user)
+    if (role === 'seller' && !user.isApproved) {
+        return res.status(403).json({
+            message: 'Seller profile pending admin approval. Please wait for approval before login.'
+        })
+    }
+
     return res.status(201).cookie("token",token,authCookieOptions).json({
             message:`welcome ${user.name}`,
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                profilePhoto: user.profilePhoto,
-                cartItems: user.cartItems,
-                owner: user.owner
-            }
+            user: buildUserPayload(user)
         })
 
 
@@ -139,7 +167,14 @@ export const getUser = async(req, res)=>{
             })
         }
 
-        return res.status(201).json(user)
+        if (user.email === ENV.ADMIN_EMAIL && user.role !== 'admin') {
+            user.role = 'admin'
+            user.owner = true
+            user.isApproved = true
+            await user.save()
+        }
+
+        return res.status(201).json(buildUserPayload(user))
     } catch (error) {
         console.log(`error from getUser, ${error}`)
     }
@@ -227,5 +262,53 @@ export const logout = async(req, res)=>{
         })
     } catch (error) {
         console.log(`error from logout`)
+    }
+}
+
+export const getPendingSellers = async (req, res) => {
+    try {
+        const sellers = await User.find({ role: 'seller', isApproved: false })
+            .select('_id name email role isApproved createdAt')
+            .sort({ createdAt: -1 })
+
+        return res.status(200).json({
+            count: sellers.length,
+            sellers
+        })
+    } catch (error) {
+        console.log(`error from getPendingSellers, ${error}`)
+        return res.status(500).json({ message: 'Unable to fetch pending sellers' })
+    }
+}
+
+export const approveSeller = async (req, res) => {
+    try {
+        const sellerId = req.params.id
+        const seller = await User.findById(sellerId)
+
+        if (!seller) {
+            return res.status(404).json({ message: 'Seller not found' })
+        }
+
+        if (getUserRole(seller) !== 'seller') {
+            return res.status(400).json({ message: 'User is not a seller account' })
+        }
+
+        seller.isApproved = true
+        await seller.save()
+
+        return res.status(200).json({
+            message: 'Seller approved successfully',
+            seller: {
+                _id: seller._id,
+                name: seller.name,
+                email: seller.email,
+                role: seller.role,
+                isApproved: seller.isApproved
+            }
+        })
+    } catch (error) {
+        console.log(`error from approveSeller, ${error}`)
+        return res.status(500).json({ message: 'Unable to approve seller' })
     }
 }

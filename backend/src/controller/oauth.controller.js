@@ -88,6 +88,8 @@ export const googleAuthCallback = async (req, res) => {
         name: decoded.name || decoded.given_name || 'User',
         email: decoded.email,
         profilePhoto: decoded.picture || null,
+        role: 'student',
+        isApproved: true,
         isVerified: true,
         oauthProvider: 'google',
         oauthId: decoded.id || decoded.sub || decoded.jti
@@ -101,6 +103,9 @@ export const googleAuthCallback = async (req, res) => {
         user.oauthProvider = 'google'
         user.oauthId = decoded.id || decoded.sub || decoded.jti
         user.isVerified = true
+        if (!user.role) {
+          user.role = user.owner ? 'admin' : 'student'
+        }
         await user.save()
       }
     }
@@ -120,6 +125,8 @@ export const googleAuthCallback = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role || (user.owner ? 'admin' : 'student'),
+        isApproved: Boolean(user.isApproved),
         profilePhoto: user.profilePhoto || null,
         cartItem: user.cartItems?.length || 0
       }

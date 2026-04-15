@@ -23,6 +23,8 @@ const Navbar = () => {
 
   const cartCount = user?.cartItems?.length || 0
   const profileImage = user?.profilePicture || user?.profilePhoto
+  const role = user?.role || (user?.owner ? 'admin' : 'student')
+  const canOpenDashboard = role === 'admin' || (role === 'seller' && user?.isApproved)
   const navItemClass = ({ isActive }) =>
     `rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ${
       isActive
@@ -112,7 +114,7 @@ const Navbar = () => {
                     Placement Reviews
                   </Link>
 
-                  {user?.owner && (
+                  {canOpenDashboard && (
                     <button
                       onClick={() => navigate('/dashboard')}
                       className='rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950'

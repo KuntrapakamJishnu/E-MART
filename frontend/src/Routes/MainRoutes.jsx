@@ -10,6 +10,7 @@ const Product = lazy(() => import('@/Pages/User/Product'))
 const Dashboard = lazy(() => import('@/Pages/Admin/Dashboard'))
 const AnalyticDashboard = lazy(() => import('@/Pages/Admin/AnalyticDashboard'))
 const ProductDashboard = lazy(() => import('@/Pages/Admin/ProductDashboard'))
+const ApprovalDashboard = lazy(() => import('@/Pages/Admin/ApprovalDashboard'))
 const SingleProduct = lazy(() => import('@/Pages/User/SingleProduct'))
 const CartPage = lazy(() => import('@/Pages/User/CartPage'))
 const Purchase = lazy(() => import('@/Pages/User/Purchase'))
@@ -92,6 +93,12 @@ const MainRoutes = () => {
           <Route path='product' element={
               <ProtectedRoute>
                   <ProductDashboard/>
+
+              </ProtectedRoute>
+              }/>
+          <Route path='approvals' element={
+              <ProtectedRoute>
+                  <ApprovalDashboard/>
 
               </ProtectedRoute>
               }/>

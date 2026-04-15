@@ -26,16 +26,31 @@ const Login = () => {
   return (
         <div className='relative min-h-screen overflow-hidden bg-[#040712] text-white'>
             <div
-                className='absolute inset-0 bg-no-repeat'
+                className='absolute inset-0 bg-no-repeat md:hidden'
                 style={{
                     backgroundImage: `url(${loginHoodie})`,
-                    backgroundSize: 'auto 94vh',
-                    backgroundPosition: 'right 58%'
+                    backgroundSize: 'auto 90vh',
+                    backgroundPosition: 'center 56%'
                 }}
             />
+
+            <div className='pointer-events-none absolute inset-y-0 right-0 hidden w-[58%] md:block'>
+                <div
+                    className='absolute inset-0 bg-no-repeat'
+                    style={{
+                        backgroundImage: `url(${loginHoodie})`,
+                        backgroundSize: 'auto 92vh',
+                        backgroundPosition: 'center 60%'
+                    }}
+                />
+                <div className='absolute inset-0 bg-[linear-gradient(90deg,rgba(4,7,18,0.92)_0%,rgba(4,7,18,0.35)_24%,rgba(4,7,18,0.22)_100%)]' />
+                <div className='absolute inset-0 bg-[radial-gradient(circle_at_78%_35%,rgba(56,189,248,0.16),transparent_46%),radial-gradient(circle_at_65%_80%,rgba(245,158,11,0.14),transparent_44%)]' />
+                <div className='absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent' />
+            </div>
             
             {/* Gradient Overlays */}
-                        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_32%),linear-gradient(170deg,_rgba(3,7,18,0.56),_rgba(10,20,36,0.7))]' />
+                        <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_32%),linear-gradient(170deg,_rgba(3,7,18,0.62),_rgba(10,20,36,0.76))]' />
+                        <div className='pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.22)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.22)_1px,transparent_1px)] [background-size:32px_32px]' />
                         <div className='pointer-events-none absolute -left-24 top-8 h-72 w-72 rounded-full bg-amber-400/12 blur-3xl' />
                         <div className='pointer-events-none absolute right-0 bottom-20 h-80 w-80 rounded-full bg-blue-400/14 blur-3xl' />
 

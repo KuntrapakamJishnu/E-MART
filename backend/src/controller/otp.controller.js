@@ -10,6 +10,8 @@ const generateOtp = () => {
 export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body
+    const normalizedRole = String(req.body?.role || 'student').toLowerCase()
+    const role = normalizedRole === 'seller' ? 'seller' : 'student'
 
     if (!email) {
       return res.status(400).json({
@@ -35,7 +37,9 @@ export const sendOtp = async (req, res) => {
       {
         otpCode: otp,
         otpExpiry: otpExpiry,
-        isVerified: false
+        isVerified: false,
+        role,
+        isApproved: role === 'seller' ? false : true
       },
       { upsert: true, new: true }
     )
@@ -66,6 +70,8 @@ export const sendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp, name, password } = req.body
+    const normalizedRole = String(req.body?.role || 'student').toLowerCase()
+    const role = normalizedRole === 'seller' ? 'seller' : 'student'
 
     if (!email || !otp || !name || !password) {
       return res.status(400).json({
@@ -112,6 +118,8 @@ export const verifyOtp = async (req, res) => {
       {
         name,
         password: hashedPassword,
+        role,
+        isApproved: role === 'seller' ? false : true,
         isVerified: true,
         otpCode: null,
         otpExpiry: null
@@ -123,11 +131,15 @@ export const verifyOtp = async (req, res) => {
     await sendWelcomeEmail(email, name)
 
     return res.status(201).json({
-      message: 'Account verified successfully. Please login with your email and password.',
+      message: role === 'seller'
+        ? 'Seller account created. Admin approval is required before login.'
+        : 'Account verified successfully. Please login with your email and password.',
       user: {
         id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
+        role: updatedUser.role,
+        isApproved: updatedUser.isApproved,
         profilePhoto: updatedUser.profilePhoto || null,
         cartItem: updatedUser.cartItems?.length || 0
       }

@@ -15,6 +15,8 @@ import { useUserStore } from '@/store/userStore'
 
 const Profile = () => {
   const user = useUserStore((state) => state.user)
+  const role = user?.role || (user?.owner ? 'admin' : 'student')
+  const roleLabel = role === 'admin' ? 'Admin' : role === 'seller' ? 'Seller' : 'Student Buyer'
   const {register, handleSubmit, reset} = useForm()
   const {mutate, isPending} = useUpdateProfileHook()
 
@@ -97,7 +99,10 @@ const Profile = () => {
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='rounded-2xl border border-white/15 bg-white/8 p-4 backdrop-blur-xl'>
               <p className='text-xs uppercase tracking-[0.28em] text-white/45'>Account Type</p>
-              <p className='mt-2 text-base font-semibold text-white'>{user?.owner ? 'Admin' : 'Customer'}</p>
+              <p className='mt-2 text-base font-semibold text-white'>{roleLabel}</p>
+              {role === 'seller' && (
+                <p className='mt-1 text-xs text-white/65'>Status: {user?.isApproved ? 'Approved' : 'Pending Admin Approval'}</p>
+              )}
             </div>
             <div className='rounded-2xl border border-white/15 bg-white/8 p-4 backdrop-blur-xl'>
               <p className='text-xs uppercase tracking-[0.28em] text-white/45'>Cart Items</p>

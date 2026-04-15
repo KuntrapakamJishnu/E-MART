@@ -37,7 +37,9 @@ const defaultFormState = {
 
 const PlacementReviews = () => {
   const user = useUserStore((state) => state.user)
-  const isAdmin = Boolean(user?.owner)
+  const role = user?.role || (user?.owner ? 'admin' : 'student')
+  const isAdmin = role === 'admin'
+  const canReviewManage = isAdmin || (role === 'seller' && user?.isApproved)
   const [companyFilter, setCompanyFilter] = useState('')
   const [minRatingFilter, setMinRatingFilter] = useState(0)
   const [editingId, setEditingId] = useState(null)
@@ -112,7 +114,7 @@ const PlacementReviews = () => {
   const maxCompanyCount = Math.max(1, ...companies.map((item) => item.total || 0))
   const maxRoundCount = Math.max(1, ...roundDistribution.map((item) => item.count || 0))
 
-  const canSubmit = isAdmin && !(posting || updating)
+  const canSubmit = canReviewManage && !(posting || updating)
 
   const byCurrentUser = (review) => {
     if (typeof review.isOwner === 'boolean') return review.isOwner
@@ -155,8 +157,8 @@ const PlacementReviews = () => {
           </div>
         </div>
 
-        <div className={isAdmin ? 'grid gap-6 xl:grid-cols-[1.1fr_0.9fr]' : 'grid gap-6'}>
-          {isAdmin ? (
+        <div className={canReviewManage ? 'grid gap-6 xl:grid-cols-[1.1fr_0.9fr]' : 'grid gap-6'}>
+          {canReviewManage ? (
           <section className='rounded-[32px] border border-white/15 bg-white/95 p-6 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
             <div className='mb-2 flex items-center justify-between'>
               <h2 className='text-xl font-black tracking-[-0.03em] text-slate-900'>
@@ -181,7 +183,7 @@ const PlacementReviews = () => {
                   onChange={(e) => setFormState((prev) => ({ ...prev, companyName: e.target.value }))}
                   placeholder='Company name'
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!isAdmin}
+                  disabled={!canReviewManage}
                   required
                 />
                 <input
@@ -189,7 +191,7 @@ const PlacementReviews = () => {
                   onChange={(e) => setFormState((prev) => ({ ...prev, role: e.target.value }))}
                   placeholder='Role (SDE, Analyst, Intern...)'
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!isAdmin}
+                  disabled={!canReviewManage}
                   required
                 />
               </div>
@@ -199,7 +201,7 @@ const PlacementReviews = () => {
                   value={formState.experienceLevel}
                   onChange={(e) => setFormState((prev) => ({ ...prev, experienceLevel: e.target.value }))}
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!isAdmin}
+                  disabled={!canReviewManage}
                 >
                   <option value='Intern'>Intern</option>
                   <option value='Fresher'>Fresher</option>
@@ -215,7 +217,7 @@ const PlacementReviews = () => {
                   onChange={(e) => setFormState((prev) => ({ ...prev, rounds: Number(e.target.value) }))}
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
                   placeholder='Rounds'
-                  disabled={!isAdmin}
+                  disabled={!canReviewManage}
                   required
                 />
 
@@ -223,7 +225,7 @@ const PlacementReviews = () => {
                   value={formState.hiringProcessRating}
                   onChange={(e) => setFormState((prev) => ({ ...prev, hiringProcessRating: Number(e.target.value) }))}
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!isAdmin}
+                  disabled={!canReviewManage}
                 >
                   <option value={1}>1/5</option>
                   <option value={2}>2/5</option>
@@ -238,7 +240,7 @@ const PlacementReviews = () => {
                 onChange={(e) => setFormState((prev) => ({ ...prev, processSummary: e.target.value }))}
                 placeholder='Hiring process overview (round flow, timeline, evaluation style...)'
                 className='min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400'
-                disabled={!isAdmin}
+                disabled={!canReviewManage}
                 required
               />
 
@@ -247,7 +249,7 @@ const PlacementReviews = () => {
                 onChange={(e) => setFormState((prev) => ({ ...prev, askedQuestions: e.target.value }))}
                 placeholder='Questions asked (technical/HR/coding)'
                 className='min-h-20 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400'
-                disabled={!isAdmin}
+                disabled={!canReviewManage}
               />
 
               <textarea
@@ -255,14 +257,14 @@ const PlacementReviews = () => {
                 onChange={(e) => setFormState((prev) => ({ ...prev, tipsForStudents: e.target.value }))}
                 placeholder='Tips for students preparing for this company'
                 className='min-h-20 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400'
-                disabled={!isAdmin}
+                disabled={!canReviewManage}
               />
 
               <select
                 value={formState.outcome}
                 onChange={(e) => setFormState((prev) => ({ ...prev, outcome: e.target.value }))}
                 className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                disabled={!isAdmin}
+                disabled={!canReviewManage}
               >
                 <option value='Selected'>Selected</option>
                 <option value='Rejected'>Rejected</option>
@@ -281,7 +283,7 @@ const PlacementReviews = () => {
           </section>
           ) : null}
 
-          <section className={isAdmin ? 'space-y-6' : ''}>
+          <section className={canReviewManage ? 'space-y-6' : ''}>
             {isAdmin ? (
             <div className='rounded-[32px] border border-white/15 bg-white/95 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
               <h3 className='inline-flex items-center gap-2 text-lg font-black text-slate-900'>
@@ -423,7 +425,7 @@ const PlacementReviews = () => {
                     </p>
 
                     <div className='mt-3 flex flex-wrap items-center gap-2'>
-                      {isAdmin ? (
+                      {canReviewManage ? (
                         <button
                           onClick={() => toggleHelpful(review._id)}
                           disabled={helping}
@@ -443,7 +445,7 @@ const PlacementReviews = () => {
                         </span>
                       )}
 
-                      {isAdmin && byCurrentUser(review) ? (
+                      {canReviewManage && byCurrentUser(review) ? (
                         <>
                           <button
                             onClick={() => beginEditReview(review)}

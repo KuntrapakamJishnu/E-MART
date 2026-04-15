@@ -25,6 +25,16 @@ const productSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
@@ -36,6 +46,8 @@ productSchema.index({name: "text", description: "text", category: "text"});
 productSchema.index({category: 1});
 productSchema.index({price: 1});
 productSchema.index({isFeatured: 1, createdAt: -1});
+productSchema.index({approvalStatus: 1, createdAt: -1});
+productSchema.index({owner: 1, approvalStatus: 1, createdAt: -1});
 productSchema.index({createdAt: -1});
 const Product = mongoose.model("Product", productSchema);
 

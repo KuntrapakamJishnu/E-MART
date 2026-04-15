@@ -16,8 +16,26 @@ const clearProductCaches = async () => {
     }
 }
 
+const isAdminUser = (user) => {
+    if (!user) return false
+    return user.role === 'admin' || user.owner === true || user.email === ENV.ADMIN_EMAIL
+}
+
+const isApprovedSeller = (user) => {
+    return user?.role === 'seller' && Boolean(user?.isApproved)
+}
+
 export const createProduct = async (req, res) => {
     try {
+        const viewer = req.user
+        if (!viewer) {
+            return res.status(401).json({ message: 'Please login first' })
+        }
+
+        if (!isAdminUser(viewer) && !isApprovedSeller(viewer)) {
+            return res.status(403).json({ message: 'Only approved sellers or admins can create products' })
+        }
+
         const name = req.body.name || req.body.title || req.body.productName || req.body.description;
         const description = req.body.description || req.body.details || req.body.productDescription || req.body.name;
         const price = req.body.price;
@@ -57,12 +75,20 @@ export const createProduct = async (req, res) => {
             category,
             price,
             description,
-            imageUrl
+            imageUrl,
+            owner: viewer._id,
+            approvalStatus: isAdminUser(viewer) ? 'approved' : 'pending',
+            approvedBy: isAdminUser(viewer) ? viewer._id : null
         });
 
         await clearProductCaches()
 
-        return res.status(201).json(product);
+        return res.status(201).json({
+            ...product.toObject(),
+            message: isAdminUser(viewer)
+                ? 'Product created and approved'
+                : 'Product created and submitted for admin approval'
+        });
 
     } catch (error) {
         console.log(error, "From create product controller");
@@ -147,7 +173,7 @@ Only reply with one single keyword from the list above that best matches the que
         // cache key based par filter and pagination lagana hai 
 
 
-        const cacheKey = `products:${JSON.stringify({
+        const cacheKey = `products:v2:${JSON.stringify({
             page,
             limit,
             search:aiText??"",
@@ -169,7 +195,7 @@ Only reply with one single keyword from the list above that best matches the que
 
         const [item, total]=await Promise.all([
             Product.find(mongoQuery)
-              .select('name category price description imageUrl isFeatured createdAt')
+                            .select('name category price description imageUrl isFeatured approvalStatus createdAt owner')
               .sort({ createdAt: -1 })
               .skip(skip)
               .limit(limit)
@@ -241,8 +267,14 @@ export const getFeatureProduct = async (req, res) => {
             return res.status(200).json(data)
         }
 
-        const featuredProducts = await Product.find({ isFeatured: true })
-            .select('name category price description imageUrl isFeatured createdAt')
+        const featuredProducts = await Product.find({
+            isFeatured: true,
+            $or: [
+                { approvalStatus: 'approved' },
+                { approvalStatus: { $exists: false } }
+            ]
+        })
+            .select('name category price description imageUrl isFeatured approvalStatus createdAt')
             .sort({ createdAt: -1 })
             .lean();
 
@@ -262,6 +294,10 @@ export const toggleFeatureProducts = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: "Product not found" })
     }
+
+        if (product.approvalStatus && product.approvalStatus !== 'approved') {
+            return res.status(400).json({ message: 'Only approved products can be featured' })
+        }
 
     product.isFeatured = !product.isFeatured
     await product.save()
@@ -283,6 +319,7 @@ export const toggleFeatureProducts = async (req, res) => {
 
 export const deleteProduct = async(req,res)=>{
     try {
+        const viewer = req.user
         const productId = req.params.id;
 
         const product = await Product.findById(productId)
@@ -291,6 +328,10 @@ export const deleteProduct = async(req,res)=>{
             return res.status(401).json({
                 message:"Product not found"
             })
+        }
+
+        if (!isAdminUser(viewer) && String(product.owner || '') !== String(viewer?._id || '')) {
+            return res.status(403).json({ message: 'You can delete only your own product' })
         }
 
         if(product.imageUrl){
@@ -320,11 +361,16 @@ export const deleteProduct = async(req,res)=>{
 
 export const updateProduct = async (req, res) => {
     try {
+        const viewer = req.user
         const productId = req.params.id
         const product = await Product.findById(productId)
 
         if (!product) {
             return res.status(404).json({ message: "Product not found" })
+        }
+
+        if (!isAdminUser(viewer) && String(product.owner || '') !== String(viewer?._id || '')) {
+            return res.status(403).json({ message: 'You can update only your own product' })
         }
 
         const { name, description, category } = req.body
@@ -358,12 +404,20 @@ export const updateProduct = async (req, res) => {
             product.imageUrl = uploadRes.secure_url
         }
 
+        if (!isAdminUser(viewer)) {
+            product.approvalStatus = 'pending'
+            product.approvedBy = null
+            product.isFeatured = false
+        }
+
         await product.save()
 
         await clearProductCaches()
 
         return res.status(200).json({
-            message: "Product updated successfully",
+            message: isAdminUser(viewer)
+                ? "Product updated successfully"
+                : "Product updated and moved to pending approval",
             product
         })
     } catch (error) {
@@ -375,8 +429,11 @@ export const updateProduct = async (req, res) => {
 
 export const getSingleProduct = async(req,res)=>{
     try {
+        const viewer = req.user
+        const adminViewer = isAdminUser(viewer)
+        const viewerId = String(viewer?._id || '')
         const productId = req.params.id
-        const cacheKey = `products:single:${productId}`
+        const cacheKey = `products:single:${productId}:${viewerId}:${adminViewer}`
         const cached = await redis.get(cacheKey)
         if (cached) {
             const data = typeof cached === 'string' ? JSON.parse(cached) : cached
@@ -384,7 +441,7 @@ export const getSingleProduct = async(req,res)=>{
         }
 
         const product = await Product.findById(productId)
-            .select('name category price description imageUrl isFeatured createdAt updatedAt')
+            .select('name category price description imageUrl isFeatured approvalStatus createdAt updatedAt owner')
             .lean()
 
         if(!product){
@@ -393,11 +450,59 @@ export const getSingleProduct = async(req,res)=>{
             })
         }
 
+        if (!adminViewer && product.approvalStatus && product.approvalStatus !== 'approved' && String(product.owner || '') !== String(viewer?._id || '')) {
+            return res.status(403).json({ message: 'Product is pending admin approval' })
+        }
+
         await redis.set(cacheKey, JSON.stringify(product), { ex: 600 })
 
         return res.status(200).json(product)
     } catch (error) {
         console.error(`error from get single Product:`, error)
         return res.status(500).json({ message: "Unable to fetch product" })
+    }
+}
+
+export const getPendingProducts = async (req, res) => {
+    try {
+        const pendingProducts = await Product.find({ approvalStatus: 'pending' })
+            .populate('owner', 'name email role isApproved')
+            .select('name category price description imageUrl approvalStatus owner createdAt')
+            .sort({ createdAt: -1 })
+            .lean()
+
+        return res.status(200).json({
+            count: pendingProducts.length,
+            products: pendingProducts
+        })
+    } catch (error) {
+        console.error('error from getPendingProducts:', error)
+        return res.status(500).json({ message: 'Unable to fetch pending products' })
+    }
+}
+
+export const approveProduct = async (req, res) => {
+    try {
+        const productId = req.params.id
+        const approverId = req.id
+
+        const product = await Product.findById(productId)
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' })
+        }
+
+        product.approvalStatus = 'approved'
+        product.approvedBy = approverId
+        await product.save()
+
+        await clearProductCaches()
+
+        return res.status(200).json({
+            message: 'Product approved successfully',
+            product
+        })
+    } catch (error) {
+        console.error('error from approveProduct:', error)
+        return res.status(500).json({ message: 'Unable to approve product' })
     }
 }
