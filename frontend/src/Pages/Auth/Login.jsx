@@ -1,5 +1,6 @@
 import { Spinner } from '@/components/ui/spinner'
 import { useLoginHook } from '@/hooks/user.hook'
+import { getOAuthUrlsApi } from '@/Api/auth.api'
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -118,18 +119,16 @@ const Login = () => {
 
                                     <button
                                         type='button'
-                                        onClick={() => {
+                                        onClick={async () => {
                                             try {
-                                                const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-                                                const callbackUrl = import.meta.env.VITE_GOOGLE_CALLBACK_URL
+                                                const oauthData = await getOAuthUrlsApi()
+                                                const authUrl = oauthData?.google
 
-                                                if (!clientId || !callbackUrl) {
+                                                if (!authUrl) {
                                                     alert('Google OAuth not configured. Please contact support.')
                                                     return
                                                 }
 
-                                                const redirectUri = callbackUrl
-                                                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile`
                                                 window.location.href = authUrl
                                             } catch (error) {
                                                 console.error('OAuth error:', error)
