@@ -4,6 +4,7 @@ import { ProtectedRoute } from './Protectedroutes'
 
 const Login = lazy(() => import('@/Pages/Auth/Login'))
 const Register = lazy(() => import('@/Pages/Auth/Register'))
+const OAuthCallback = lazy(() => import('@/Pages/Auth/OAuthCallback'))
 const Home = lazy(() => import('@/Pages/User/Home'))
 const Profile = lazy(() => import('@/Pages/User/Profile'))
 const Product = lazy(() => import('@/Pages/User/Product'))
@@ -44,6 +45,7 @@ const MainRoutes = () => {
           }/>
           <Route path='/login' element={<Login/>}/>
           <Route path='/register' element={<Register/>}/>
+          <Route path='/oauth/callback' element={<OAuthCallback/>}/>
           <Route path='/profile' element={
               <ProtectedRoute>
                   <Profile/>
