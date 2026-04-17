@@ -16,6 +16,11 @@ const getGoogleRedirectUri = () => {
   return ENV.GOOGLE_CALLBACK_URL || `${ENV.BACKEND_URL || 'https://campuskartai.onrender.com'}/api/auth/google/callback`
 }
 
+const getFrontendLoginSuccessUrl = () => {
+  const frontendBase = (ENV.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
+  return `${frontendBase}/login?success=true`
+}
+
 export const getGoogleAuthUrl = () => {
   const redirectUri = getGoogleRedirectUri()
 
@@ -132,7 +137,7 @@ export const googleAuthCallback = async (req, res) => {
     res.cookie('token', token, authCookieOptions)
 
     if (isBrowserRedirectFlow) {
-      return res.redirect(`${frontendUrl}/`)
+      return res.redirect(getFrontendLoginSuccessUrl())
     }
 
     return res.status(200).json({

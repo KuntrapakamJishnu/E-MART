@@ -18,7 +18,13 @@ const Login = () => {
     }
 
     useEffect(() => {
+        const oauthSuccess = searchParams.get('success')
         const oauthError = searchParams.get('oauthError')
+
+        if (oauthSuccess === 'true') {
+            toast.success('Google login successful. Loading your session...')
+        }
+
         if (oauthError) {
             toast.error(decodeURIComponent(oauthError))
         }
