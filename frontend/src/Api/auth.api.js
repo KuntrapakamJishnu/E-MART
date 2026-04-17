@@ -34,7 +34,9 @@ export const resendOtpApi = async (email) => {
 // Get OAuth URLs
 export const getOAuthUrlsApi = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/auth/oauth/urls`)
+    const response = await axios.get(`${API_BASE_URL}/auth/urls`, {
+      withCredentials: true
+    })
     return response.data
   } catch (error) {
     throw error
@@ -44,7 +46,9 @@ export const getOAuthUrlsApi = async () => {
 // Google OAuth Callback
 export const googleAuthCallbackApi = async (idToken) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/oauth/google/callback`, { idToken })
+    const response = await axios.post(`${API_BASE_URL}/auth/google/callback`, { idToken }, {
+      withCredentials: true
+    })
     return response.data
   } catch (error) {
     throw error

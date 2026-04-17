@@ -4,19 +4,27 @@ import { ENV } from '../config/env.js'
 import { sendWelcomeEmail } from '../config/smtp.js'
 
 const getAuthCookieOptions = (req) => {
-  const forwardedProto = req.headers['x-forwarded-proto']
-  const isSecureRequest = req.secure || forwardedProto === 'https'
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').toLowerCase()
+  const isHttpsForwarded = forwardedProto.split(',').map((value) => value.trim()).includes('https') || forwardedProto.includes('https')
+  const isProduction = process.env.NODE_ENV === 'production'
+  const isSecureRequest = isProduction || req.secure || isHttpsForwarded
 
   return {
     maxAge: 1 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: isSecureRequest ? 'none' : 'lax',
     secure: isSecureRequest,
+    path: '/',
   }
 }
 
 const getGoogleRedirectUri = () => {
-  return ENV.GOOGLE_CALLBACK_URL || `${ENV.BACKEND_URL || 'https://campuskartai.onrender.com'}/api/auth/google/callback`
+  if (ENV.GOOGLE_CALLBACK_URL) {
+    return ENV.GOOGLE_CALLBACK_URL
+  }
+
+  const backendBase = (ENV.BACKEND_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${ENV.PORT || 3000}`).replace(/\/$/, '')
+  return `${backendBase}/api/auth/google/callback`
 }
 
 const getFrontendLoginSuccessUrl = () => {

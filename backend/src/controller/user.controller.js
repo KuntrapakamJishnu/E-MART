@@ -5,8 +5,10 @@ import { ENV } from "../config/env.js";
 import cloudinary from "../config/cloudinary.js";
 
 const getCookieSecurity = (req) => {
-    const forwardedProto = req.headers['x-forwarded-proto']
-    const isSecureRequest = req.secure || forwardedProto === 'https'
+    const forwardedProto = String(req.headers['x-forwarded-proto'] || '').toLowerCase()
+    const isHttpsForwarded = forwardedProto.split(',').map((value) => value.trim()).includes('https') || forwardedProto.includes('https')
+    const isProduction = process.env.NODE_ENV === 'production'
+    const isSecureRequest = isProduction || req.secure || isHttpsForwarded
 
     return {
         sameSite: isSecureRequest ? 'none' : 'lax',
@@ -19,6 +21,7 @@ const getAuthCookieOptions = (req) => {
     return {
         maxAge: 1 * 24 * 60 * 60 * 1000,
         httpOnly: true,
+        path: '/',
         ...security
     }
 }
@@ -28,6 +31,7 @@ const getClearCookieOptions = (req) => {
     return {
         httpOnly: true,
         maxAge: 0,
+        path: '/',
         ...security
     }
 }
