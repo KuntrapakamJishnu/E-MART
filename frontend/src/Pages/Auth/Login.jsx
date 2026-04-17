@@ -8,6 +8,30 @@ import { toast } from 'sonner'
 import loginHoodie from '@/assets/login-hoodie.png'
 import CompanyLogo from '@/assets/CompanyLogo.png'
 import { useGetProfileHook } from '@/hooks/user.hook'
+import { googleAuthCallbackApi } from '@/Api/auth.api'
+
+const loadGoogleScript = () => new Promise((resolve, reject) => {
+    if (window.google?.accounts?.oauth2) {
+        resolve()
+        return
+    }
+
+    const existing = document.getElementById('google-oauth-script')
+    if (existing) {
+        existing.addEventListener('load', () => resolve())
+        existing.addEventListener('error', () => reject(new Error('Failed to load Google script')))
+        return
+    }
+
+    const script = document.createElement('script')
+    script.id = 'google-oauth-script'
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google script'))
+    document.head.appendChild(script)
+})
 
 const Login = () => {
     const { register, handleSubmit } = useForm()
@@ -18,6 +42,48 @@ const Login = () => {
 
     const loginHandler = (data) => {
         mutate(data)
+    }
+
+    const startGoogleLogin = async () => {
+        const apiBase = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
+        const oauthEntry = apiBase.endsWith('/api')
+            ? `${apiBase}/auth/google`
+            : `${apiBase}/api/auth/google`
+
+        try {
+            await loadGoogleScript()
+
+            const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+            if (!clientId || !window.google?.accounts?.oauth2) {
+                window.location.href = oauthEntry
+                return
+            }
+
+            const tokenClient = window.google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'openid email profile',
+                callback: async (tokenResponse) => {
+                    try {
+                        if (!tokenResponse?.access_token) {
+                            throw new Error('Google access token missing')
+                        }
+
+                        await googleAuthCallbackApi({ accessToken: tokenResponse.access_token })
+                        toast.success('Google login successful')
+                        navigate('/', { replace: true })
+                    } catch (error) {
+                        console.error('Google popup auth failed:', error)
+                        toast.error(error?.response?.data?.message || 'Google login failed')
+                        window.location.href = oauthEntry
+                    }
+                }
+            })
+
+            tokenClient.requestAccessToken()
+        } catch (error) {
+            console.error('OAuth popup setup failed:', error)
+            window.location.href = oauthEntry
+        }
     }
 
     useEffect(() => {
@@ -130,19 +196,7 @@ const Login = () => {
 
                                     <button
                                         type='button'
-                                        onClick={() => {
-                                            try {
-                                                const apiBase = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
-                                                const oauthEntry = apiBase.endsWith('/api')
-                                                    ? `${apiBase}/auth/google`
-                                                    : `${apiBase}/api/auth/google`
-
-                                                window.location.href = oauthEntry
-                                            } catch (error) {
-                                                console.error('OAuth error:', error)
-                                                alert('Failed to initiate Google login')
-                                            }
-                                        }}
+                                        onClick={startGoogleLogin}
                                         disabled={false}
                                         className='inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/60 bg-white px-4 text-sm font-semibold text-slate-900 shadow-[0_8px_24px_rgba(255,255,255,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:shadow-[0_12px_32px_rgba(255,255,255,0.24)] disabled:cursor-not-allowed disabled:opacity-70'
                                     >

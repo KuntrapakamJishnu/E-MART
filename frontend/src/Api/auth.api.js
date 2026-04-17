@@ -44,9 +44,9 @@ export const getOAuthUrlsApi = async () => {
 }
 
 // Google OAuth Callback
-export const googleAuthCallbackApi = async (idToken) => {
+export const googleAuthCallbackApi = async (payload) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/google/callback`, { idToken }, {
+    const response = await axios.post(`${API_BASE_URL}/auth/google/callback`, payload, {
       withCredentials: true
     })
     return response.data

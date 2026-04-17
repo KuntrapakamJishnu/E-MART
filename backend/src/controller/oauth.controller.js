@@ -79,6 +79,21 @@ const buildGoogleUserFromCode = async (code) => {
   return googleUser
 }
 
+const buildGoogleUserFromAccessToken = async (accessToken) => {
+  const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  })
+
+  const googleUser = await userResponse.json()
+  if (!userResponse.ok || !googleUser.email) {
+    throw new Error('Could not retrieve Google profile from access token')
+  }
+
+  return googleUser
+}
+
 // Google OAuth Callback
 export const googleAuthCallback = async (req, res) => {
   try {
@@ -86,10 +101,11 @@ export const googleAuthCallback = async (req, res) => {
     const frontendUrl = ENV.FRONTEND_URL || 'http://localhost:5173'
     const code = req.query.code || req.body?.code
     const idToken = req.body?.idToken
+    const accessToken = req.body?.accessToken
 
-    if (!code && !idToken) {
+    if (!code && !idToken && !accessToken) {
       return res.status(400).json({
-        message: 'Authorization code is required'
+        message: 'Authorization credential is required'
       })
     }
 
@@ -97,6 +113,8 @@ export const googleAuthCallback = async (req, res) => {
 
     if (code) {
       decoded = await buildGoogleUserFromCode(code)
+    } else if (accessToken) {
+      decoded = await buildGoogleUserFromAccessToken(accessToken)
     } else {
       // Decode Google token (in production, verify with Google's public keys)
       // For now, we'll assume the token is already verified by frontend
