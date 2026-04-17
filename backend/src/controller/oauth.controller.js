@@ -3,13 +3,16 @@ import jwt from 'jsonwebtoken'
 import { ENV } from '../config/env.js'
 import { sendWelcomeEmail } from '../config/smtp.js'
 
-const isProduction = Boolean((ENV.FRONTEND_URL || ENV.BACKEND_URL || '').startsWith('https://'))
+const getAuthCookieOptions = (req) => {
+  const forwardedProto = req.headers['x-forwarded-proto']
+  const isSecureRequest = req.secure || forwardedProto === 'https'
 
-const authCookieOptions = {
-  maxAge: 1 * 24 * 60 * 60 * 1000,
-  httpOnly: true,
-  sameSite: isProduction ? 'none' : 'lax',
-  secure: isProduction,
+  return {
+    maxAge: 1 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: isSecureRequest ? 'none' : 'lax',
+    secure: isSecureRequest,
+  }
 }
 
 const getGoogleRedirectUri = () => {
@@ -134,7 +137,7 @@ export const googleAuthCallback = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign({ userId: user._id }, ENV.JWT_TOKEN)
 
-    res.cookie('token', token, authCookieOptions)
+    res.cookie('token', token, getAuthCookieOptions(req))
 
     if (isBrowserRedirectFlow) {
       return res.redirect(getFrontendLoginSuccessUrl())

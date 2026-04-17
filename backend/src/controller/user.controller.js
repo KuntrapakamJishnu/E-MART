@@ -4,19 +4,32 @@ import jwt from 'jsonwebtoken'
 import { ENV } from "../config/env.js";
 import cloudinary from "../config/cloudinary.js";
 
-const isProduction = Boolean((ENV.FRONTEND_URL || ENV.BACKEND_URL || '').startsWith('https://'))
+const getCookieSecurity = (req) => {
+    const forwardedProto = req.headers['x-forwarded-proto']
+    const isSecureRequest = req.secure || forwardedProto === 'https'
 
-const authCookieOptions = {
-    maxAge: 1 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    sameSite: isProduction ? 'none' : 'lax',
-    secure: isProduction,
+    return {
+        sameSite: isSecureRequest ? 'none' : 'lax',
+        secure: isSecureRequest
+    }
 }
 
-const clearCookieOptions = {
-    httpOnly: true,
-    sameSite: isProduction ? 'none' : 'lax',
-    secure: isProduction,
+const getAuthCookieOptions = (req) => {
+    const security = getCookieSecurity(req)
+    return {
+        maxAge: 1 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        ...security
+    }
+}
+
+const getClearCookieOptions = (req) => {
+    const security = getCookieSecurity(req)
+    return {
+        httpOnly: true,
+        maxAge: 0,
+        ...security
+    }
 }
 
 const getUserRole = (user) => {
@@ -87,7 +100,7 @@ export const register =async(req ,res)=>{
             })
         }
 
-        return res.status(201).cookie("token",token,authCookieOptions).json({
+        return res.status(201).cookie("token", token, getAuthCookieOptions(req)).json({
             message:`welcome ${user.name}`,
             user: buildUserPayload(user)
         })
@@ -134,7 +147,7 @@ export const login = async(req, res)=>{
         user.role = 'admin';
         user.isApproved = true;
         await user.save()
-        return res.status(201).cookie("token",token,authCookieOptions).json({
+        return res.status(201).cookie("token", token, getAuthCookieOptions(req)).json({
             message:`welcome back Admin ${user.name}`,
             user: buildUserPayload(user)
         })
@@ -147,7 +160,7 @@ export const login = async(req, res)=>{
         })
     }
 
-    return res.status(201).cookie("token",token,authCookieOptions).json({
+    return res.status(201).cookie("token", token, getAuthCookieOptions(req)).json({
             message:`welcome ${user.name}`,
             user: buildUserPayload(user)
         })
@@ -260,7 +273,7 @@ export const updateProfile = async(req,res)=>{
 
 export const logout = async(req, res)=>{
     try {
-         return res.status(201).cookie("token", "", clearCookieOptions).json({
+         return res.status(201).cookie("token", "", getClearCookieOptions(req)).json({
             message:`user Logged out successfully`
         })
     } catch (error) {

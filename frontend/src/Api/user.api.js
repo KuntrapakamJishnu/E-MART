@@ -1,7 +1,5 @@
 import axios from "axios"
-
-const rawApiBase = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
-const API_BASE_URL = rawApiBase.endsWith('/api') ? rawApiBase : `${rawApiBase}/api`
+import { API_BASE_URL } from "./base.api"
 
 export const registerApi = async(paylod)=>{
     const res =  await axios.post(`${API_BASE_URL}/register`,
