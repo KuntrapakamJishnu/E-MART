@@ -130,12 +130,6 @@ const CustomerReview = () => {
     setReviewForm({ name: '', rating: 5, title: '', comment: '' })
   }
 
-  const getPreviewText = (text = '', limit = 145) => {
-    const content = String(text || '').trim()
-    if (content.length <= limit) return content
-    return `${content.slice(0, limit).trim()}...`
-  }
-
   // Star rendering function
   const renderStars = (rating) => {
     return [...Array(5)].map((_, index) => (
@@ -322,7 +316,19 @@ const CustomerReview = () => {
                       </p>
                     </div>
                   </div>
-                  <span className='rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-500 transition-colors duration-300 hover:bg-gray-100'>
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors duration-300 ${
+                    expandedReviewIds[review.id]
+                      ? 'border-gray-300 bg-gray-900 text-white'
+                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+                  }`}>
+                    <svg
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ${expandedReviewIds[review.id] ? 'rotate-180' : ''}`}
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                    </svg>
                     {expandedReviewIds[review.id] ? 'Collapse' : 'Expand'}
                   </span>
                 </button>
@@ -338,14 +344,13 @@ const CustomerReview = () => {
                 </h4>
 
                 {/* Review Comment */}
-                {!expandedReviewIds[review.id] ? (
-                  <p className='mb-4 text-gray-700 leading-relaxed transition-all duration-300'>
-                    {getPreviewText(review.comment, 95)}
-                  </p>
-                ) : (
-                  <div className='mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3'>
+                {expandedReviewIds[review.id] ? (
+                  <div className='mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4'>
+                    <p className='mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500'>Detailed feedback</p>
                     <p className='text-gray-700 leading-relaxed'>{review.comment}</p>
                   </div>
+                ) : (
+                  <p className='mb-4 text-sm text-gray-500'>Expand to read full review details.</p>
                 )}
 
                 {/* Review Footer */}
