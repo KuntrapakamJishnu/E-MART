@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { useUserStore } from "@/store/userStore"
+import { setAuthToken } from "@/Api/base.api"
 
 const getErrorMessage = (err, fallbackMessage) =>
     err?.response?.data?.message || fallbackMessage
@@ -15,6 +16,7 @@ export const useRegisterHook = ()=>{
         mutationFn:registerApi,
         onSuccess:(data)=>{
             toast.success(data.message)
+            setAuthToken(data?.token || null)
             setUser(data.user)
             navigate('/')
         },
@@ -34,6 +36,7 @@ export const useLoginHook = ()=>{
         mutationFn:loginApi,
         onSuccess:(data)=>{
             toast.success(data.message)
+            setAuthToken(data?.token || null)
             setUser(data.user)
             queryClient.invalidateQueries({ queryKey: ['getUser'] })
             navigate('/')
@@ -53,6 +56,7 @@ export const useLogoutHook = ()=>{
         onSuccess:(data)=>{
             toast.success(data.message)
             clearUser()
+            setAuthToken(null)
             queryClient.removeQueries({ queryKey: ['getUser'] })
             queryClient.removeQueries({ queryKey: ['getCartItem'] })
             navigate('/login', { replace: true })

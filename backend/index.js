@@ -12,6 +12,7 @@ import interviewReviewRoute from "./src/routes/interviewReview.route.js"
 import otpRoute from "./src/routes/otp.route.js"
 import oauthRoute from "./src/routes/oauth.route.js"
 import cors from 'cors'
+import { repairOrderIndexes } from './src/model/order.model.js'
 
 const app = express()
 
@@ -41,7 +42,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token']
 }));
 
 app.use(cookieParser())
@@ -72,6 +73,7 @@ const startServer = async () => {
   try {
     validateRequiredEnv()
     await connectDB({ retries: 5, retryDelayMs: 5000 })
+    await repairOrderIndexes()
     app.listen(ENV.PORT, () => {
       console.log(`✅ Server running on port ${ENV.PORT}`)
     })

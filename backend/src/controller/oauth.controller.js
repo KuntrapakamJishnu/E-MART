@@ -98,7 +98,6 @@ const buildGoogleUserFromAccessToken = async (accessToken) => {
 export const googleAuthCallback = async (req, res) => {
   try {
     const isBrowserRedirectFlow = req.method === 'GET'
-    const frontendUrl = ENV.FRONTEND_URL || 'http://localhost:5173'
     const code = req.query.code || req.body?.code
     const idToken = req.body?.idToken
     const accessToken = req.body?.accessToken
@@ -166,11 +165,15 @@ export const googleAuthCallback = async (req, res) => {
     res.cookie('token', token, getAuthCookieOptions(req))
 
     if (isBrowserRedirectFlow) {
-      return res.redirect(getFrontendLoginSuccessUrl())
+      const redirectUrl = new URL(getFrontendLoginSuccessUrl())
+      redirectUrl.searchParams.set('token', token)
+      redirectUrl.searchParams.set('success', 'true')
+      return res.redirect(redirectUrl.toString())
     }
 
     return res.status(200).json({
       message: `Welcome ${user.name}`,
+      token,
       user: {
         id: user._id,
         name: user.name,

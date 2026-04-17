@@ -130,6 +130,13 @@ const Navbar = () => {
                     Placement Reviews
                   </Link>
 
+                  <Link
+                    to={'/orders'}
+                    className='rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950'
+                  >
+                    Order History
+                  </Link>
+
                   {canOpenDashboard && (
                     <button
                       onClick={() => navigate('/dashboard')}
@@ -197,6 +204,14 @@ const Navbar = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Placement Reviews
+              </Link>
+
+              <Link
+                to={'/orders'}
+                className='rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100'
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Order History
               </Link>
 
               {canOpenDashboard && (

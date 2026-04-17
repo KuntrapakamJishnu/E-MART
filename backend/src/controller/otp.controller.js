@@ -6,6 +6,11 @@ const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
+const isStrongPassword = (password = '') => {
+  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,64}$/
+  return strongPasswordRegex.test(password)
+}
+
 // Send OTP to email
 export const sendOtp = async (req, res) => {
   try {
@@ -76,6 +81,12 @@ export const verifyOtp = async (req, res) => {
     if (!email || !otp || !name || !password) {
       return res.status(400).json({
         message: 'Email, OTP, name, and password are required'
+      })
+    }
+
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({
+        message: 'Password must be 8-64 characters and include uppercase, lowercase, number, and special character'
       })
     }
 

@@ -8,7 +8,7 @@ import CompanyLogo from '@/assets/CompanyLogo.png'
 
 const Register = () => {
     const navigate = useNavigate()
-    const { register, handleSubmit } = useForm()
+    const { register, handleSubmit, formState: { errors } } = useForm()
     const [step, setStep] = useState(1)
     const [formData, setFormData] = useState(null)
     const [resendTimer, setResendTimer] = useState(0)
@@ -62,6 +62,7 @@ const Register = () => {
     }
 
     const activeSubmit = step === 1 ? handleSendOtp : handleVerifyOtp
+    const namePattern = /^[A-Za-z][A-Za-z\s.'-]{1,78}[A-Za-z.]$|^[A-Za-z]{2,80}$/
 
     return (
         <div className='relative min-h-screen overflow-hidden bg-[#0a0820] text-white'>
@@ -125,8 +126,15 @@ const Register = () => {
                                                     type='text'
                                                     placeholder='John Doe'
                                                     className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/45 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-cyan-300/85 focus:bg-slate-900/70 focus:ring-2 focus:ring-cyan-500/30'
-                                                    {...register('name', { required: true })}
+                                                    {...register('name', {
+                                                        required: 'Full name is required',
+                                                        pattern: {
+                                                            value: namePattern,
+                                                            message: 'Name must be 2-80 letters with basic separators only'
+                                                        }
+                                                    })}
                                                 />
+                                                {errors.name ? <p className='mt-2 text-xs text-rose-300'>{errors.name.message}</p> : null}
                                             </div>
 
                                             <div>
@@ -147,8 +155,15 @@ const Register = () => {
                                                     type='email'
                                                     placeholder='you@example.com'
                                                     className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/45 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-cyan-300/85 focus:bg-slate-900/70 focus:ring-2 focus:ring-cyan-500/30'
-                                                    {...register('email', { required: true })}
+                                                    {...register('email', {
+                                                        required: 'Email is required',
+                                                        pattern: {
+                                                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                                            message: 'Please enter a valid email address'
+                                                        }
+                                                    })}
                                                 />
+                                                {errors.email ? <p className='mt-2 text-xs text-rose-300'>{errors.email.message}</p> : null}
                                             </div>
 
                                             <div>
@@ -157,8 +172,19 @@ const Register = () => {
                                                     type='password'
                                                     placeholder='••••••••'
                                                     className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/45 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-cyan-300/85 focus:bg-slate-900/70 focus:ring-2 focus:ring-cyan-500/30'
-                                                    {...register('password', { required: true })}
+                                                    {...register('password', {
+                                                        required: 'Password is required',
+                                                        pattern: {
+                                                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,64}$/,
+                                                            message: 'Use 8-64 chars with uppercase, lowercase, number and special character'
+                                                        }
+                                                    })}
                                                 />
+                                                {errors.password ? (
+                                                    <p className='mt-2 text-xs text-rose-300'>{errors.password.message}</p>
+                                                ) : (
+                                                    <p className='mt-2 text-xs text-white/50'>Use 8-64 characters including uppercase, lowercase, number, and special character.</p>
+                                                )}
                                             </div>
                                         </div>
                                     )}
@@ -182,8 +208,15 @@ const Register = () => {
                                                     placeholder='000000'
                                                     maxLength='6'
                                                     className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/45 px-4 text-center text-sm text-white placeholder:text-white/45 outline-none transition focus:border-cyan-300/85 focus:bg-slate-900/70 focus:ring-2 focus:ring-cyan-500/30'
-                                                    {...register('otp', { required: true })}
+                                                    {...register('otp', {
+                                                        required: 'OTP is required',
+                                                        pattern: {
+                                                            value: /^\d{6}$/,
+                                                            message: 'OTP must be exactly 6 digits'
+                                                        }
+                                                    })}
                                                 />
+                                                {errors.otp ? <p className='mt-2 text-xs text-rose-300'>{errors.otp.message}</p> : null}
                                             </div>
 
                                             <p className='text-xs text-white/50'>

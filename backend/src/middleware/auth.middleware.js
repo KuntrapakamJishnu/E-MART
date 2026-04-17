@@ -22,7 +22,9 @@ const isAdminUser = (user) => {
 
 export const protectRoute =async(req ,res, next)=>{
     try {
-        const token = req.cookies.token
+        const authHeader = req.headers.authorization || ''
+        const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null
+        const token = req.cookies.token || bearerToken || req.headers['x-auth-token']
 
         if(!token){
             return res.status(401).json({
@@ -52,7 +54,7 @@ export const protectRoute =async(req ,res, next)=>{
         next()
     } catch (error) {
         console.error(`error from protect middleware:`, error);
-        return res.status(500).json({ message: "Authentication failed" });
+        return res.status(401).json({ message: "Authentication failed" });
     }
 }
 

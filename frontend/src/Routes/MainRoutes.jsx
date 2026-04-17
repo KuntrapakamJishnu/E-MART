@@ -18,6 +18,7 @@ const Purchase = lazy(() => import('@/Pages/User/Purchase'))
 const AIAssistant = lazy(() => import('@/Pages/User/AIAssistant'))
 const PlacementReviews = lazy(() => import('@/Pages/User/PlacementReviews'))
 const ContactUs = lazy(() => import('@/Pages/User/ContactUs'))
+const OrderHistory = lazy(() => import('@/Pages/User/OrderHistory'))
 
 const PageFallback = () => (
     <div className='min-h-screen flex items-center justify-center bg-slate-950 px-4 text-white'>
@@ -84,6 +85,11 @@ const MainRoutes = () => {
           <Route path='/contact' element={
               <ProtectedRoute>
                   <ContactUs/>
+              </ProtectedRoute>
+          }/>
+          <Route path='/orders' element={
+              <ProtectedRoute>
+                  <OrderHistory/>
               </ProtectedRoute>
           }/>
 

@@ -55,19 +55,51 @@ const buildUserPayload = (user) => ({
     isApproved: Boolean(user.isApproved)
 })
 
+const isStrongPassword = (password = '') => {
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,64}$/
+    return strongPasswordRegex.test(password)
+}
+
+const isValidName = (name = '') => {
+    const trimmed = String(name || '').trim()
+    return /^[A-Za-z][A-Za-z\s.'-]{1,78}[A-Za-z.]$/.test(trimmed) || /^[A-Za-z]{2,80}$/.test(trimmed)
+}
+
+const isValidEmail = (email = '') => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim())
+
 export const register =async(req ,res)=>{
     try {
-        const {name, password, email} = req.body;
+        const rawName = String(req.body?.name || '').trim()
+        const password = String(req.body?.password || '')
+        const rawEmail = String(req.body?.email || '').trim().toLowerCase()
         const normalizedRole = String(req.body?.role || 'student').toLowerCase()
         const role = normalizedRole === 'seller' ? 'seller' : 'student'
 
-        if(!name || !password || !email){
+        if(!rawName || !password || !rawEmail){
             return res.status(401).json({
                 message:"Please provide all the details"
             })
         }
 
-        const existingUser = await User.findOne({email})
+        if (!isValidName(rawName)) {
+            return res.status(400).json({
+                message: 'Name must be 2-80 characters and contain only letters and basic separators'
+            })
+        }
+
+        if (!isValidEmail(rawEmail)) {
+            return res.status(400).json({
+                message: 'Please provide a valid email address'
+            })
+        }
+
+        if (!isStrongPassword(password)) {
+            return res.status(400).json({
+                message: 'Password must be 8-64 characters and include uppercase, lowercase, number, and special character'
+            })
+        }
+
+        const existingUser = await User.findOne({ email: rawEmail })
 
         if(existingUser){
             return res.status(201).json({
@@ -79,8 +111,8 @@ export const register =async(req ,res)=>{
         const hashPassword = await bcrypt.hash(password, 10)
 
         const user = await User.create({
-            name, 
-            email,
+            name: rawName,
+            email: rawEmail,
             password:hashPassword,
             role,
             isApproved: role === 'seller' ? false : true
@@ -106,6 +138,7 @@ export const register =async(req ,res)=>{
 
         return res.status(201).cookie("token", token, getAuthCookieOptions(req)).json({
             message:`welcome ${user.name}`,
+            token,
             user: buildUserPayload(user)
         })
         
@@ -158,6 +191,7 @@ export const login = async(req, res)=>{
         await user.save()
         return res.status(201).cookie("token", token, getAuthCookieOptions(req)).json({
             message:`welcome back Admin ${user.name}`,
+            token,
             user: buildUserPayload(user)
         })
        }
@@ -171,6 +205,7 @@ export const login = async(req, res)=>{
 
     return res.status(201).cookie("token", token, getAuthCookieOptions(req)).json({
             message:`welcome ${user.name}`,
+            token,
             user: buildUserPayload(user)
         })
 
@@ -233,7 +268,23 @@ export const getCartItem = async(req,res)=>{
             })
         }
 
-       return res.status(200).json(user)
+       const validCartItems = (user.cartItems || []).filter((item) => item?.product)
+       const hadOrphanedItems = validCartItems.length !== (user.cartItems || []).length
+
+       if (hadOrphanedItems) {
+            await User.findByIdAndUpdate(userId, {
+                $set: {
+                    cartItems: validCartItems.map((item) => ({
+                        product: item.product._id,
+                        quantity: item.quantity
+                    }))
+                }
+            })
+       }
+
+       return res.status(200).json({
+            cartItems: validCartItems
+       })
     } catch (error) {
         console.error(`Get cart items error: ${error.message}`)
         return res.status(500).json({

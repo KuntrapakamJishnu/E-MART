@@ -9,6 +9,7 @@ import loginHoodie from '@/assets/login-hoodie.png'
 import CompanyLogo from '@/assets/CompanyLogo.png'
 import { useGetProfileHook } from '@/hooks/user.hook'
 import { googleAuthCallbackApi } from '@/Api/auth.api'
+import { API_BASE_URL, setAuthToken } from '@/Api/base.api'
 
 const loadGoogleScript = () => new Promise((resolve, reject) => {
     if (window.google?.accounts?.oauth2) {
@@ -45,10 +46,7 @@ const Login = () => {
     }
 
     const startGoogleLogin = async () => {
-        const apiBase = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
-        const oauthEntry = apiBase.endsWith('/api')
-            ? `${apiBase}/auth/google`
-            : `${apiBase}/api/auth/google`
+        const oauthEntry = `${API_BASE_URL}/auth/google`
 
         try {
             await loadGoogleScript()
@@ -68,7 +66,8 @@ const Login = () => {
                             throw new Error('Google access token missing')
                         }
 
-                        await googleAuthCallbackApi({ accessToken: tokenResponse.access_token })
+                        const oauthResponse = await googleAuthCallbackApi({ accessToken: tokenResponse.access_token })
+                        setAuthToken(oauthResponse?.token)
                         toast.success('Google login successful')
                         navigate('/', { replace: true })
                     } catch (error) {
@@ -89,6 +88,11 @@ const Login = () => {
     useEffect(() => {
         const oauthSuccess = searchParams.get('success')
         const oauthError = searchParams.get('oauthError')
+        const hasOAuthParams = Boolean(oauthSuccess || oauthError)
+
+        if (hasOAuthParams) {
+            window.history.replaceState({}, document.title, window.location.pathname)
+        }
 
         if (oauthSuccess === 'true') {
             toast.success('Google login successful. Loading your session...')

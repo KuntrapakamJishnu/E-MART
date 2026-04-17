@@ -1,12 +1,28 @@
 import React, { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useGetProfileHook } from '@/hooks/user.hook'
+import { setAuthToken } from '@/Api/base.api'
 
 const OAuthCallback = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const attemptsRef = useRef(0)
   const { data, isLoading, isError, refetch } = useGetProfileHook()
+
+  useEffect(() => {
+    const token = searchParams.get('token')
+    const hasSuccessParam = searchParams.get('success') === 'true'
+
+    if (token || hasSuccessParam) {
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+
+    if (token) {
+      setAuthToken(token)
+      refetch()
+    }
+  }, [refetch, searchParams])
 
   useEffect(() => {
     if (data) {
