@@ -23,7 +23,9 @@ export const useGetAllProductHook = ({
   search = "",
   category = "",
   minPrice = "",
-  maxPrice = ""
+    maxPrice = "",
+    color = "",
+    quality = ""
 } = {}) => {
   return useQuery({
     queryKey: [
@@ -33,7 +35,9 @@ export const useGetAllProductHook = ({
       search,
       category,
       minPrice,
-      maxPrice
+            maxPrice,
+            color,
+            quality
     ],
     queryFn: () =>
       getAllProductApi({
@@ -42,7 +46,9 @@ export const useGetAllProductHook = ({
         search,
         category,
         minPrice,
-        maxPrice
+                maxPrice,
+                color,
+                quality
       }),
     keepPreviousData: true
   });

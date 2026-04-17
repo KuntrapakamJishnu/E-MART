@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { ENV } from "../config/env.js";
 import cloudinary from "../config/cloudinary.js";
+import Order from '../model/order.model.js'
 
 const getCookieSecurity = (req) => {
     const forwardedProto = String(req.headers['x-forwarded-proto'] || '').toLowerCase()
@@ -503,5 +504,81 @@ export const getAllUsersForAdmin = async (req, res) => {
     } catch (error) {
         console.log(`error from getAllUsersForAdmin, ${error}`)
         return res.status(500).json({ message: 'Unable to fetch users' })
+    }
+}
+
+export const getOrderSupportRequestsForAdmin = async (req, res) => {
+    try {
+        const orders = await Order.find({ 'supportRequests.0': { $exists: true } })
+            .populate('user', 'name email')
+            .sort({ updatedAt: -1 })
+            .lean()
+
+        const requests = orders.flatMap((order) => {
+            const supportRequests = Array.isArray(order.supportRequests) ? order.supportRequests : []
+
+            return supportRequests.map((supportItem) => ({
+                requestId: supportItem?._id,
+                orderId: order._id,
+                orderStatus: order.orderStatus,
+                createdAt: order.createdAt,
+                user: order.user
+                    ? { name: order.user.name, email: order.user.email }
+                    : { name: 'Unknown', email: 'N/A' },
+                requestType: supportItem.requestType,
+                reason: supportItem.reason,
+                status: supportItem.status,
+                requestedAt: supportItem.requestedAt
+            }))
+        })
+
+        return res.status(200).json({
+            count: requests.length,
+            requests
+        })
+    } catch (error) {
+        console.error('Get order support requests error:', error.message)
+        return res.status(500).json({
+            message: 'Unable to fetch order support requests',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
+    }
+}
+
+export const updateOrderSupportRequestStatusByAdmin = async (req, res) => {
+    try {
+        const { orderId, requestId } = req.params
+        const nextStatus = String(req.body?.status || '').trim()
+
+        if (!['Approved', 'Rejected', 'Completed'].includes(nextStatus)) {
+            return res.status(400).json({ message: 'Invalid status. Allowed: Approved, Rejected, Completed' })
+        }
+
+        const order = await Order.findById(orderId)
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' })
+        }
+
+        const supportRequest = (order.supportRequests || []).find(
+            (item) => String(item?._id || '') === String(requestId || '')
+        )
+
+        if (!supportRequest) {
+            return res.status(404).json({ message: 'Support request not found' })
+        }
+
+        supportRequest.status = nextStatus
+        await order.save()
+
+        return res.status(200).json({
+            message: `Support request marked as ${nextStatus}`,
+            supportRequest
+        })
+    } catch (error) {
+        console.error('Update support request status error:', error.message)
+        return res.status(500).json({
+            message: 'Unable to update support request status',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }

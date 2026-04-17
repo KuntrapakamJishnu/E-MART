@@ -40,6 +40,8 @@ export const createProduct = async (req, res) => {
         const description = req.body.description || req.body.details || req.body.productDescription || req.body.name;
         const price = req.body.price;
         const category = req.body.category;
+        const color = String(req.body.color || '').trim();
+        const quality = String(req.body.quality || '').trim();
 
         const missingFields = [];
         if (!name) missingFields.push('name');
@@ -75,6 +77,8 @@ export const createProduct = async (req, res) => {
             category,
             price,
             description,
+            color,
+            quality,
             imageUrl,
             owner: viewer._id,
             approvalStatus: isAdminUser(viewer) ? 'approved' : 'pending',
@@ -117,7 +121,7 @@ export const getProductController = async(req,res)=>{
         // then page 3 par next 20 products show hongey and past k 40 products skip ho jaayenge
         // and so on...
 
-        const {search, category, minPrice, maxPrice} = req.query
+        const {search, category, minPrice, maxPrice, color, quality} = req.query
 
 
          const prompt = `You are an intelligent assistant for an E-commerce platform. A user will type any query about what they want. Your task is to understand the intent and return most relevant keyword from the following list of categories:
@@ -165,6 +169,43 @@ Only reply with one single keyword from the list above that best matches the que
         if(category){
             mongoQuery.category = category
         }
+
+        if (color) {
+            const colorRegex = { $regex: String(color).trim(), $options: 'i' }
+            mongoQuery.$and = mongoQuery.$and || []
+            mongoQuery.$and.push({
+                $or: [
+                    { color: colorRegex },
+                    { name: colorRegex },
+                    { description: colorRegex }
+                ]
+            })
+        }
+
+        if (quality) {
+            const qualityValue = String(quality).trim().toLowerCase()
+            if (qualityValue === 'budget') {
+                mongoQuery.price = mongoQuery.price || {}
+                if (mongoQuery.price.$lte === undefined) mongoQuery.price.$lte = 499
+            } else if (qualityValue === 'standard') {
+                mongoQuery.price = mongoQuery.price || {}
+                if (mongoQuery.price.$gte === undefined) mongoQuery.price.$gte = 500
+                if (mongoQuery.price.$lte === undefined) mongoQuery.price.$lte = 1499
+            } else if (qualityValue === 'premium') {
+                mongoQuery.price = mongoQuery.price || {}
+                if (mongoQuery.price.$gte === undefined) mongoQuery.price.$gte = 1500
+            } else {
+                const qualityRegex = { $regex: String(quality).trim(), $options: 'i' }
+                mongoQuery.$and = mongoQuery.$and || []
+                mongoQuery.$and.push({
+                    $or: [
+                        { quality: qualityRegex },
+                        { description: qualityRegex },
+                        { name: qualityRegex }
+                    ]
+                })
+            }
+        }
         
         if(minPrice || maxPrice){
             mongoQuery.price={}
@@ -182,7 +223,9 @@ Only reply with one single keyword from the list above that best matches the que
             search:aiText??"",
             category:aiCategory??"",
             minPrice:minPrice??"",
-            maxPrice:maxPrice??""
+            maxPrice:maxPrice??"",
+            color:color??"",
+            quality:quality??""
         })}`
 
 
@@ -198,7 +241,7 @@ Only reply with one single keyword from the list above that best matches the que
 
         const [item, total]=await Promise.all([
             Product.find(mongoQuery)
-                            .select('name category price description imageUrl isFeatured approvalStatus createdAt owner')
+                            .select('name category price description color quality imageUrl isFeatured approvalStatus createdAt owner')
               .sort({ createdAt: -1 })
               .skip(skip)
               .limit(limit)
@@ -218,7 +261,9 @@ Only reply with one single keyword from the list above that best matches the que
                     search:aiText,
                     category:aiCategory,
                     minPrice,
-                    maxPrice
+                    maxPrice,
+                    color,
+                    quality
                 }
             }
 
@@ -243,7 +288,9 @@ Only reply with one single keyword from the list above that best matches the que
                 search:aiText,
                 category:aiCategory,
                 minPrice,
-                maxPrice
+                maxPrice,
+                color,
+                quality
             }
         }
 
@@ -390,6 +437,8 @@ export const updateProduct = async (req, res) => {
         }
 
         const { name, description, category } = req.body
+        const hasColorField = req.body.color !== undefined
+        const hasQualityField = req.body.quality !== undefined
         const hasPriceField = req.body.price !== undefined && req.body.price !== null && req.body.price !== ''
         const parsedPrice = hasPriceField ? Number(req.body.price) : null
 
@@ -400,6 +449,8 @@ export const updateProduct = async (req, res) => {
         if (name !== undefined) product.name = name
         if (description !== undefined) product.description = description
         if (category !== undefined) product.category = category
+        if (hasColorField) product.color = String(req.body.color || '').trim()
+        if (hasQualityField) product.quality = String(req.body.quality || '').trim()
         if (hasPriceField) product.price = parsedPrice
 
         if (req.file) {
@@ -460,7 +511,7 @@ export const getSingleProduct = async(req,res)=>{
         }
 
         const product = await Product.findById(productId)
-            .select('name category price description imageUrl isFeatured approvalStatus createdAt updatedAt owner')
+            .select('name category price description color quality imageUrl isFeatured approvalStatus createdAt updatedAt owner')
             .lean()
 
         if(!product){
@@ -489,7 +540,7 @@ export const getPendingProducts = async (req, res) => {
     try {
         const pendingProducts = await Product.find({ approvalStatus: 'pending' })
             .populate('owner', 'name email role isApproved')
-            .select('name category price description imageUrl approvalStatus owner createdAt')
+            .select('name category price description color quality imageUrl approvalStatus owner createdAt')
             .sort({ createdAt: -1 })
             .lean()
 

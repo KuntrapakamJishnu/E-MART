@@ -1,4 +1,14 @@
-import { approveProductApi, approveSellerApi, deleteUserByAdminApi, getAdminUsersApi, getPendingProductsApi, getPendingSellersApi, getRecentLoginsApi } from '@/Api/admin.api'
+import {
+  approveProductApi,
+  approveSellerApi,
+  deleteUserByAdminApi,
+  getAdminUsersApi,
+  getOrderSupportRequestsApi,
+  getPendingProductsApi,
+  getPendingSellersApi,
+  getRecentLoginsApi,
+  updateOrderSupportRequestStatusApi
+} from '@/Api/admin.api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -74,6 +84,29 @@ export const useDeleteUserByAdminHook = () => {
     },
     onError: (err) => {
       toast.error(err?.response?.data?.message || 'Unable to remove user')
+    }
+  })
+}
+
+export const useOrderSupportRequestsHook = () => {
+  return useQuery({
+    queryKey: ['admin-order-support-requests'],
+    queryFn: getOrderSupportRequestsApi
+  })
+}
+
+export const useUpdateOrderSupportRequestStatusHook = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: updateOrderSupportRequestStatusApi,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Support request updated')
+      queryClient.invalidateQueries({ queryKey: ['admin-order-support-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['myOrders'] })
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Unable to update support request')
     }
   })
 }

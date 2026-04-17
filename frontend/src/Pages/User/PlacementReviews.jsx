@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   useCreateInterviewReviewHook,
   useDeleteInterviewReviewHook,
@@ -8,7 +8,7 @@ import {
   useUpdateInterviewReviewHook
 } from '@/hooks/interviewReview.hook'
 import { useUserStore } from '@/store/userStore'
-import { BarChart3, Briefcase, Pencil, ThumbsUp, Trash2 } from 'lucide-react'
+import { BarChart3, Briefcase, ChevronRight, Pencil, ThumbsUp, Trash2 } from 'lucide-react'
 
 const StarRow = ({ rating }) => {
   const rounded = Math.max(1, Math.min(5, Number(rating || 0)))
@@ -39,10 +39,12 @@ const PlacementReviews = () => {
   const user = useUserStore((state) => state.user)
   const role = user?.role || (user?.owner ? 'admin' : 'student')
   const isAdmin = role === 'admin'
-  const canReviewManage = isAdmin || (role === 'seller' && user?.isApproved)
+  const canReviewPost = Boolean(user?._id)
   const [companyFilter, setCompanyFilter] = useState('')
   const [minRatingFilter, setMinRatingFilter] = useState(0)
   const [editingId, setEditingId] = useState(null)
+  const [selectedCompany, setSelectedCompany] = useState('')
+  const [expandedReviewIds, setExpandedReviewIds] = useState({})
 
   const [formState, setFormState] = useState(defaultFormState)
 
@@ -59,16 +61,54 @@ const PlacementReviews = () => {
   const reviews = data?.reviews || []
   const averageRating = data?.averageRating || 0
 
-  const topCompanies = useMemo(() => {
-    const map = new Map()
-    for (const item of reviews) {
-      const key = (item.companyName || 'Unknown').trim()
-      map.set(key, (map.get(key) || 0) + 1)
+  const companyBuckets = useMemo(() => {
+    const grouped = new Map()
+    for (const review of reviews) {
+      const name = (review.companyName || 'Unknown').trim() || 'Unknown'
+      const existing = grouped.get(name) || {
+        companyName: name,
+        total: 0,
+        ratingSum: 0,
+        reviews: []
+      }
+
+      existing.total += 1
+      existing.ratingSum += Number(review.hiringProcessRating || 0)
+      existing.reviews.push(review)
+      grouped.set(name, existing)
     }
-    return Array.from(map.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
+
+    return Array.from(grouped.values())
+      .map((item) => ({
+        ...item,
+        averageRating: Number((item.ratingSum / Math.max(1, item.total)).toFixed(1)),
+        reviews: item.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      }))
+      .sort((a, b) => b.total - a.total)
   }, [reviews])
+
+  useEffect(() => {
+    if (!companyBuckets.length) {
+      setSelectedCompany('')
+      return
+    }
+
+    const exists = companyBuckets.some((item) => item.companyName === selectedCompany)
+    if (!selectedCompany || !exists) {
+      setSelectedCompany(companyBuckets[0].companyName)
+    }
+  }, [companyBuckets, selectedCompany])
+
+  const selectedCompanyData = useMemo(
+    () => companyBuckets.find((item) => item.companyName === selectedCompany) || null,
+    [companyBuckets, selectedCompany]
+  )
+
+  const topCompanies = useMemo(() => {
+    return companyBuckets
+      .map((item) => [item.companyName, item.total])
+      .slice(0, 4)
+  }, [companyBuckets])
 
   const resetForm = () => {
     setFormState(defaultFormState)
@@ -114,11 +154,25 @@ const PlacementReviews = () => {
   const maxCompanyCount = Math.max(1, ...companies.map((item) => item.total || 0))
   const maxRoundCount = Math.max(1, ...roundDistribution.map((item) => item.count || 0))
 
-  const canSubmit = canReviewManage && !(posting || updating)
+  const canSubmit = canReviewPost && !(posting || updating)
 
   const byCurrentUser = (review) => {
     if (typeof review.isOwner === 'boolean') return review.isOwner
     return String(review?.author?._id || '') === String(user?._id || '')
+  }
+
+  const toggleReviewExpand = (reviewId) => {
+    setExpandedReviewIds((prev) => ({
+      ...prev,
+      [reviewId]: !prev[reviewId]
+    }))
+  }
+
+  const getPreviewText = (text = '', limit = 170) => {
+    const value = String(text || '').trim()
+    if (!value) return ''
+    if (value.length <= limit) return value
+    return `${value.slice(0, limit).trim()}...`
   }
 
   return (
@@ -157,8 +211,7 @@ const PlacementReviews = () => {
           </div>
         </div>
 
-        <div className={canReviewManage ? 'grid gap-6 xl:grid-cols-[1.1fr_0.9fr]' : 'grid gap-6'}>
-          {canReviewManage ? (
+        <div className='grid gap-6 xl:grid-cols-[1.05fr_0.95fr]'>
           <section className='rounded-[32px] border border-white/15 bg-white/95 p-6 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
             <div className='mb-2 flex items-center justify-between'>
               <h2 className='text-xl font-black tracking-[-0.03em] text-slate-900'>
@@ -183,7 +236,7 @@ const PlacementReviews = () => {
                   onChange={(e) => setFormState((prev) => ({ ...prev, companyName: e.target.value }))}
                   placeholder='Company name'
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!canReviewManage}
+                  disabled={!canReviewPost}
                   required
                 />
                 <input
@@ -191,7 +244,7 @@ const PlacementReviews = () => {
                   onChange={(e) => setFormState((prev) => ({ ...prev, role: e.target.value }))}
                   placeholder='Role (SDE, Analyst, Intern...)'
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!canReviewManage}
+                  disabled={!canReviewPost}
                   required
                 />
               </div>
@@ -201,7 +254,7 @@ const PlacementReviews = () => {
                   value={formState.experienceLevel}
                   onChange={(e) => setFormState((prev) => ({ ...prev, experienceLevel: e.target.value }))}
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!canReviewManage}
+                  disabled={!canReviewPost}
                 >
                   <option value='Intern'>Intern</option>
                   <option value='Fresher'>Fresher</option>
@@ -217,7 +270,7 @@ const PlacementReviews = () => {
                   onChange={(e) => setFormState((prev) => ({ ...prev, rounds: Number(e.target.value) }))}
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
                   placeholder='Rounds'
-                  disabled={!canReviewManage}
+                  disabled={!canReviewPost}
                   required
                 />
 
@@ -225,7 +278,7 @@ const PlacementReviews = () => {
                   value={formState.hiringProcessRating}
                   onChange={(e) => setFormState((prev) => ({ ...prev, hiringProcessRating: Number(e.target.value) }))}
                   className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                  disabled={!canReviewManage}
+                  disabled={!canReviewPost}
                 >
                   <option value={1}>1/5</option>
                   <option value={2}>2/5</option>
@@ -240,7 +293,7 @@ const PlacementReviews = () => {
                 onChange={(e) => setFormState((prev) => ({ ...prev, processSummary: e.target.value }))}
                 placeholder='Hiring process overview (round flow, timeline, evaluation style...)'
                 className='min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400'
-                disabled={!canReviewManage}
+                disabled={!canReviewPost}
                 required
               />
 
@@ -249,7 +302,7 @@ const PlacementReviews = () => {
                 onChange={(e) => setFormState((prev) => ({ ...prev, askedQuestions: e.target.value }))}
                 placeholder='Questions asked (technical/HR/coding)'
                 className='min-h-20 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400'
-                disabled={!canReviewManage}
+                disabled={!canReviewPost}
               />
 
               <textarea
@@ -257,14 +310,14 @@ const PlacementReviews = () => {
                 onChange={(e) => setFormState((prev) => ({ ...prev, tipsForStudents: e.target.value }))}
                 placeholder='Tips for students preparing for this company'
                 className='min-h-20 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400'
-                disabled={!canReviewManage}
+                disabled={!canReviewPost}
               />
 
               <select
                 value={formState.outcome}
                 onChange={(e) => setFormState((prev) => ({ ...prev, outcome: e.target.value }))}
                 className='h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-cyan-400'
-                disabled={!canReviewManage}
+                disabled={!canReviewPost}
               >
                 <option value='Selected'>Selected</option>
                 <option value='Rejected'>Rejected</option>
@@ -281,9 +334,8 @@ const PlacementReviews = () => {
               </button>
             </form>
           </section>
-          ) : null}
 
-          <section className={canReviewManage ? 'space-y-6' : ''}>
+          <section className='space-y-6'>
             {isAdmin ? (
             <div className='rounded-[32px] border border-white/15 bg-white/95 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
               <h3 className='inline-flex items-center gap-2 text-lg font-black text-slate-900'>
@@ -362,7 +414,7 @@ const PlacementReviews = () => {
 
             <div className='rounded-[32px] border border-white/15 bg-white/95 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
             <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-              <h2 className='text-xl font-black text-slate-900'>Community Interview Feed</h2>
+              <h2 className='text-xl font-black text-slate-900'>Company Experience Explorer</h2>
               <div className='flex gap-2'>
                 <input
                   value={companyFilter}
@@ -383,90 +435,158 @@ const PlacementReviews = () => {
               </div>
             </div>
 
-            <div className='mt-4 max-h-[760px] space-y-3 overflow-y-auto pr-1'>
+            <div className='mt-4 grid gap-3 lg:grid-cols-[220px_1fr]'>
               {isLoading ? (
                 <p className='text-sm text-slate-500'>Loading reviews...</p>
               ) : reviews.length === 0 ? (
                 <p className='text-sm text-slate-500'>No interview reviews yet. Be the first one to help your batch.</p>
               ) : (
-                reviews.map((review) => (
-                  <article key={review._id} className='rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm'>
-                    <div className='flex items-start justify-between gap-3'>
-                      <div>
-                        <h3 className='text-base font-bold text-slate-900'>
-                          {review.companyName} • {review.role}
-                        </h3>
-                        <p className='text-xs uppercase tracking-[0.2em] text-slate-400'>
-                          {review.experienceLevel} • {review.rounds} rounds • {review.outcome}
-                        </p>
-                      </div>
-                      <div className='text-right'>
-                        <StarRow rating={review.hiringProcessRating} />
-                        <p className='mt-1 text-xs text-slate-500'>Hiring: {review.hiringProcessRating}/5</p>
-                      </div>
-                    </div>
-
-                    <p className='mt-3 text-sm leading-7 text-slate-700'>{review.processSummary}</p>
-
-                    {review.askedQuestions ? (
-                      <p className='mt-2 text-sm text-slate-600'>
-                        <span className='font-semibold text-slate-800'>Questions:</span> {review.askedQuestions}
-                      </p>
-                    ) : null}
-
-                    {review.tipsForStudents ? (
-                      <p className='mt-2 text-sm text-slate-600'>
-                        <span className='font-semibold text-slate-800'>Tips:</span> {review.tipsForStudents}
-                      </p>
-                    ) : null}
-
-                    <p className='mt-3 text-xs text-slate-400'>
-                      Posted by {review?.author?.name || 'Anonymous'} • {new Date(review.createdAt).toLocaleDateString()}
-                    </p>
-
-                    <div className='mt-3 flex flex-wrap items-center gap-2'>
-                      {canReviewManage ? (
+                <>
+                  <div className='max-h-[640px] space-y-2 overflow-y-auto pr-1'>
+                    {companyBuckets.map((company) => {
+                      const isActive = selectedCompany === company.companyName
+                      return (
                         <button
-                          onClick={() => toggleHelpful(review._id)}
-                          disabled={helping}
-                          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                            review.isHelpfulByViewer
-                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                          type='button'
+                          key={company.companyName}
+                          onClick={() => setSelectedCompany(company.companyName)}
+                          className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                            isActive
+                              ? 'border-cyan-300 bg-cyan-50 text-cyan-900'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-cyan-200 hover:bg-slate-50'
                           }`}
                         >
-                          <ThumbsUp className='h-3.5 w-3.5' />
-                          Helpful ({review.helpfulVotes || 0})
+                          <div className='flex items-center justify-between gap-2'>
+                            <p className='truncate text-sm font-semibold'>{company.companyName}</p>
+                            <ChevronRight className={`h-4 w-4 ${isActive ? 'text-cyan-600' : 'text-slate-400'}`} />
+                          </div>
+                          <p className='mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-500'>
+                            {company.total} experiences • {company.averageRating}/5
+                          </p>
                         </button>
-                      ) : (
-                        <span className='inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600'>
-                          <ThumbsUp className='h-3.5 w-3.5' />
-                          Helpful ({review.helpfulVotes || 0})
-                        </span>
-                      )}
+                      )
+                    })}
+                  </div>
 
-                      {canReviewManage && byCurrentUser(review) ? (
-                        <>
-                          <button
-                            onClick={() => beginEditReview(review)}
-                            className='inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-700'
-                          >
-                            <Pencil className='h-3.5 w-3.5' />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteHandler(review._id)}
-                            disabled={deleting}
-                            className='inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700'
-                          >
-                            <Trash2 className='h-3.5 w-3.5' />
-                            Delete
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  </article>
-                ))
+                  <div className='rounded-2xl border border-slate-200 bg-slate-50 p-4'>
+                    {selectedCompanyData ? (
+                      <>
+                        <div className='flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3'>
+                          <div>
+                            <h3 className='text-lg font-black text-slate-900'>{selectedCompanyData.companyName}</h3>
+                            <p className='text-xs uppercase tracking-[0.2em] text-slate-500'>
+                              {selectedCompanyData.total} shared experiences
+                            </p>
+                          </div>
+                          <div className='text-right'>
+                            <p className='text-xs uppercase tracking-[0.2em] text-slate-500'>Avg Hiring Rating</p>
+                            <p className='text-lg font-black text-slate-900'>{selectedCompanyData.averageRating}/5</p>
+                          </div>
+                        </div>
+
+                        <div className='mt-3 max-h-[520px] space-y-3 overflow-y-auto pr-1'>
+                          {selectedCompanyData.reviews.map((review) => (
+                            <article key={review._id} className='rounded-2xl border border-slate-200 bg-white p-4'>
+                              {(() => {
+                                const isExpanded = Boolean(expandedReviewIds[review._id])
+                                const summaryText = isExpanded
+                                  ? review.processSummary
+                                  : getPreviewText(review.processSummary, 220)
+                                const questionsText = isExpanded
+                                  ? review.askedQuestions
+                                  : getPreviewText(review.askedQuestions, 160)
+                                const tipsText = isExpanded
+                                  ? review.tipsForStudents
+                                  : getPreviewText(review.tipsForStudents, 160)
+
+                                return (
+                                  <>
+                              <div className='flex items-start justify-between gap-3'>
+                                <div>
+                                  <h4 className='text-base font-bold text-slate-900'>{review.role}</h4>
+                                  <p className='text-xs uppercase tracking-[0.2em] text-slate-400'>
+                                    {review.experienceLevel} • {review.rounds} rounds • {review.outcome}
+                                  </p>
+                                </div>
+                                <div className='text-right'>
+                                  <StarRow rating={review.hiringProcessRating} />
+                                  <p className='mt-1 text-xs text-slate-500'>Hiring: {review.hiringProcessRating}/5</p>
+                                </div>
+                              </div>
+
+                              <p className='mt-3 text-sm leading-7 text-slate-700'>{summaryText}</p>
+
+                              {questionsText ? (
+                                <p className='mt-2 text-sm text-slate-600'>
+                                  <span className='font-semibold text-slate-800'>Questions:</span> {questionsText}
+                                </p>
+                              ) : null}
+
+                              {tipsText ? (
+                                <p className='mt-2 text-sm text-slate-600'>
+                                  <span className='font-semibold text-slate-800'>Tips:</span> {tipsText}
+                                </p>
+                              ) : null}
+
+                              <div className='mt-3 flex flex-wrap items-center justify-between gap-2'>
+                                <p className='text-xs text-slate-400'>
+                                  Posted by {review?.author?.name || 'Anonymous'} • {new Date(review.createdAt).toLocaleDateString()}
+                                </p>
+                                <button
+                                  type='button'
+                                  onClick={() => toggleReviewExpand(review._id)}
+                                  className='rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 hover:bg-slate-100'
+                                >
+                                  {isExpanded ? 'Collapse' : 'Expand'}
+                                </button>
+                              </div>
+
+                              <div className='mt-3 flex flex-wrap items-center gap-2'>
+                                <button
+                                  onClick={() => toggleHelpful(review._id)}
+                                  disabled={helping}
+                                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                                    review.isHelpfulByViewer
+                                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <ThumbsUp className='h-3.5 w-3.5' />
+                                  Helpful ({review.helpfulVotes || 0})
+                                </button>
+
+                                {byCurrentUser(review) ? (
+                                  <>
+                                    <button
+                                      onClick={() => beginEditReview(review)}
+                                      className='inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-700'
+                                    >
+                                      <Pencil className='h-3.5 w-3.5' />
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => deleteHandler(review._id)}
+                                      disabled={deleting}
+                                      className='inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700'
+                                    >
+                                      <Trash2 className='h-3.5 w-3.5' />
+                                      Delete
+                                    </button>
+                                  </>
+                                ) : null}
+                              </div>
+                                  </>
+                                )
+                              })()}
+                            </article>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <p className='text-sm text-slate-500'>Select a company name to view detailed interview process experiences.</p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
             </div>

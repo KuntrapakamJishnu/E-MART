@@ -70,3 +70,25 @@ export const getAdminUsersApi = async ({ page = 1, limit = 10, search = '' } = {
 
   return res.data
 }
+
+export const getOrderSupportRequestsApi = async () => {
+  const res = await axios.get(`${API_BASE_URL}/user/admin/order-support-requests`, {
+    headers: { 'Content-Type': 'application/json' },
+    withCredentials: true
+  })
+
+  return res.data
+}
+
+export const updateOrderSupportRequestStatusApi = async ({ orderId, requestId, status }) => {
+  const res = await axios.patch(
+    `${API_BASE_URL}/user/admin/order-support-requests/${orderId}/${requestId}`,
+    { status },
+    {
+      headers: { 'Content-Type': 'application/json' },
+      withCredentials: true
+    }
+  )
+
+  return res.data
+}

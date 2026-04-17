@@ -2,6 +2,7 @@ import express from 'express';
 import { protectRoute } from '../middleware/auth.middleware.js'; // Ensure 'e' is present
 import {
     checkoutSuccess,
+    createOrderSupportRequest,
     createCheckoutSession,
     placeCodOrder,
     getMyOrders,
@@ -19,5 +20,6 @@ paymentRoute.post('/placeCodOrder', protectRoute, placeCodOrder);
 paymentRoute.post('/cod', protectRoute, placeCodOrder);
 paymentRoute.get('/orders', protectRoute, getMyOrders);
 paymentRoute.get('/orders/:orderId/invoice', protectRoute, downloadMyOrderInvoice);
+paymentRoute.post('/orders/:orderId/support-request', protectRoute, createOrderSupportRequest);
 
 export default paymentRoute;

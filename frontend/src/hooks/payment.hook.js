@@ -1,4 +1,4 @@
-import { createPaymentApi, createSuccessApi, placeCodOrderApi, getMyOrdersApi, downloadOrderInvoiceApi } from '@/Api/payment.api'
+import { createPaymentApi, createSuccessApi, placeCodOrderApi, getMyOrdersApi, downloadOrderInvoiceApi, createOrderSupportRequestApi } from '@/Api/payment.api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useUserStore } from '@/store/userStore'
@@ -69,6 +69,20 @@ export const useDownloadOrderInvoiceHook = () => {
         mutationFn: downloadOrderInvoiceApi,
         onError: (err) => {
             toast.error(err?.response?.data?.message || 'Failed to download invoice')
+        }
+    })
+}
+
+export const useCreateOrderSupportRequestHook = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: createOrderSupportRequestApi,
+        onSuccess: async (data) => {
+            await queryClient.invalidateQueries({ queryKey: ['myOrders'] })
+            toast.success(data?.message || 'Support request submitted')
+        },
+        onError: (err) => {
+            toast.error(err?.response?.data?.message || 'Failed to submit support request')
         }
     })
 }

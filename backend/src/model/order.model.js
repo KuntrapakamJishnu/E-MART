@@ -61,7 +61,31 @@ const orderSchema = new mongoose.Schema({
     razorpayOrderId: {
         type: String,
         default: undefined
-    }
+    },
+    supportRequests: [
+        {
+            requestType: {
+                type: String,
+                enum: ['return', 'exchange'],
+                required: true
+            },
+            reason: {
+                type: String,
+                required: true,
+                trim: true,
+                maxlength: 500
+            },
+            status: {
+                type: String,
+                enum: ['Requested', 'Approved', 'Rejected', 'Completed'],
+                default: 'Requested'
+            },
+            requestedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ]
 }, {timestamps: true});
 
 orderSchema.index({ user: 1, createdAt: -1 });

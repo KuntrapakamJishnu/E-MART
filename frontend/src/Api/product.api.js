@@ -20,7 +20,9 @@ export const getAllProductApi = async(params)=>{
         search="",
         category="",
         minPrice="",
-        maxPrice=""
+        maxPrice="",
+        color="",
+        quality=""
     } = params
     const res = await axios.get(`${API_BASE_URL}/product/getAllProduct`,
         {
@@ -30,7 +32,9 @@ export const getAllProductApi = async(params)=>{
                 search:search||undefined,
                 category:category||undefined,
                 minPrice:minPrice||undefined,
-                maxPrice:maxPrice||undefined
+                maxPrice:maxPrice||undefined,
+                color:color||undefined,
+                quality:quality||undefined
             },
             headers: { 'Content-Type': 'application/json' },
             withCredentials: true

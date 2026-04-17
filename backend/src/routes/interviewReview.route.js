@@ -1,5 +1,5 @@
 import express from "express"
-import { approvedSellerOrAdminRoute, protectRoute } from "../middleware/auth.middleware.js"
+import { protectRoute } from "../middleware/auth.middleware.js"
 import {
 	createInterviewReview,
 	deleteInterviewReview,
@@ -11,10 +11,10 @@ import {
 
 const interviewReviewRoute = express.Router()
 
-interviewReviewRoute.post("/create", protectRoute, approvedSellerOrAdminRoute, createInterviewReview)
+interviewReviewRoute.post("/create", protectRoute, createInterviewReview)
 interviewReviewRoute.get("/list", protectRoute, getInterviewReviews)
-interviewReviewRoute.patch("/update/:id", protectRoute, approvedSellerOrAdminRoute, updateInterviewReview)
-interviewReviewRoute.delete("/delete/:id", protectRoute, approvedSellerOrAdminRoute, deleteInterviewReview)
+interviewReviewRoute.patch("/update/:id", protectRoute, updateInterviewReview)
+interviewReviewRoute.delete("/delete/:id", protectRoute, deleteInterviewReview)
 interviewReviewRoute.post("/helpful/:id", protectRoute, toggleHelpfulVote)
 interviewReviewRoute.get("/stats", protectRoute, getInterviewReviewStats)
 

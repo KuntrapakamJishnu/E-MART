@@ -5,13 +5,17 @@ import { Spinner } from './ui/spinner'
 import { ArrowRight } from 'lucide-react'
 import loginHoodie from '@/assets/login_hoodie.png'
 
-const AllProducts = ({page, setpage, activeSearch, category, priceRange},) => {
+const formatInr = (value) => `Rs. ${Number(value || 0).toFixed(2)}`
+
+const AllProducts = ({ page, setpage, activeSearch, category, priceRange, color, quality },) => {
   const {data, isLoading} = useGetAllProductHook({
     page,
     search:activeSearch,
     category:category,
-     minPrice: priceRange.min,
-  maxPrice: priceRange.max
+    minPrice: priceRange.min,
+    maxPrice: priceRange.max,
+    color,
+    quality
   })
   const navigate = useNavigate()
   
@@ -48,7 +52,7 @@ const AllProducts = ({page, setpage, activeSearch, category, priceRange},) => {
             <div 
               key={item._id}
               onClick={() => navigateSingleProduct(item._id)} 
-              className='group cursor-pointer overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_14px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_26px_70px_rgba(15,23,42,0.18)] flex flex-col h-[392px] backdrop-blur-xl'
+              className='group cursor-pointer overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_14px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_26px_70px_rgba(15,23,42,0.18)] flex flex-col h-[420px] backdrop-blur-xl'
             >
               {/* Image Container */}
               <div className='relative w-full h-[240px] overflow-hidden bg-gradient-to-br from-slate-100 via-white to-slate-200'>
@@ -71,9 +75,16 @@ const AllProducts = ({page, setpage, activeSearch, category, priceRange},) => {
                   <h3 className='text-gray-900 font-medium text-base leading-tight line-clamp-2'>
                     {productName}
                   </h3>
-                  <p className='text-2xl font-bold text-gray-900'>
-                    Rs. {item.price}
+                  <p className='text-xs leading-5 text-slate-600 line-clamp-2'>
+                    {item.description || 'Premium campus-ready product.'}
                   </p>
+                  <p className='text-2xl font-bold text-gray-900'>
+                    {formatInr(item.price)}
+                  </p>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    {item.color ? <span className='rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600'>{item.color}</span> : null}
+                    {(item.quality || quality) ? <span className='rounded-full bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-700'>{item.quality || quality}</span> : null}
+                  </div>
                 </div>
                 
                 <div className='mt-3 flex items-center justify-between'>

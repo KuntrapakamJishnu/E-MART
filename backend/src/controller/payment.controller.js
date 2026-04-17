@@ -708,3 +708,59 @@ export const downloadMyOrderInvoice = async (req, res) => {
         })
     }
 }
+
+export const createOrderSupportRequest = async (req, res) => {
+    try {
+        const orderId = req.params.orderId
+        const requestType = String(req.body?.requestType || '').trim().toLowerCase()
+        const reason = String(req.body?.reason || '').trim()
+
+        if (!['return', 'exchange'].includes(requestType)) {
+            return res.status(400).json({ message: 'Invalid request type. Allowed: return, exchange' })
+        }
+
+        if (reason.length < 8 || reason.length > 500) {
+            return res.status(400).json({ message: 'Reason must be between 8 and 500 characters' })
+        }
+
+        const order = await Order.findOne({ _id: orderId, user: req.id })
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' })
+        }
+
+        if (order.orderStatus !== 'Delivered') {
+            return res.status(400).json({ message: 'You can request return/exchange only after delivery' })
+        }
+
+        const alreadyRequested = (order.supportRequests || []).some(
+            (item) =>
+                String(item.requestType || '').toLowerCase() === requestType &&
+                String(item.status || '') === 'Requested'
+        )
+
+        if (alreadyRequested) {
+            return res.status(409).json({ message: `${requestType} request is already pending for this order` })
+        }
+
+        order.supportRequests.push({
+            requestType,
+            reason,
+            status: 'Requested',
+            requestedAt: new Date()
+        })
+
+        await order.save()
+
+        return res.status(201).json({
+            message: `${requestType === 'return' ? 'Return' : 'Exchange'} request submitted successfully`,
+            supportRequests: order.supportRequests
+        })
+    } catch (error) {
+        console.error('Create order support request error:', error.message)
+        return res.status(500).json({
+            message: 'Failed to submit support request',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
+    }
+}

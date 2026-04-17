@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { FileDown, Package, ShoppingBag, Truck } from 'lucide-react'
-import { useDownloadOrderInvoiceHook, useGetMyOrdersHook } from '@/hooks/payment.hook'
+import { CheckCircle2, FileDown, MapPin, Package, RefreshCw, ShoppingBag, Truck, Undo2 } from 'lucide-react'
+import { useCreateOrderSupportRequestHook, useDownloadOrderInvoiceHook, useGetMyOrdersHook } from '@/hooks/payment.hook'
 
 const formatDate = (value) => {
   if (!value) return 'N/A'
@@ -13,10 +13,23 @@ const formatDate = (value) => {
 
 const formatAmount = (value) => `Rs. ${Number(value || 0).toFixed(2)}`
 
+const statusSteps = ['Placed', 'Processing', 'Shipped', 'Out for delivery', 'Delivered']
+
+const getTrackingSteps = (orderStatus) => {
+  const currentIndex = statusSteps.indexOf(orderStatus)
+  return statusSteps.map((step, index) => ({
+    step,
+    done: currentIndex >= index,
+    current: currentIndex === index
+  }))
+}
+
 const OrderHistory = () => {
   const navigate = useNavigate()
+  const [trackingOrderId, setTrackingOrderId] = useState('')
   const { data, isLoading } = useGetMyOrdersHook()
   const { mutateAsync: downloadInvoice, isPending: downloadingInvoice } = useDownloadOrderInvoiceHook()
+  const { mutateAsync: submitSupportRequest, isPending: supportRequestPending } = useCreateOrderSupportRequestHook()
 
   const orders = data?.orders || []
 
@@ -36,6 +49,66 @@ const OrderHistory = () => {
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Unable to download invoice')
     }
+  }
+
+  const toggleTrackOrder = (orderId) => {
+    setTrackingOrderId((prev) => (prev === orderId ? '' : orderId))
+  }
+
+  const hasRequestedSupportType = (order, requestType) => {
+    return (order?.supportRequests || []).some(
+      (item) =>
+        String(item?.requestType || '').toLowerCase() === String(requestType).toLowerCase() &&
+        item?.status === 'Requested'
+    )
+  }
+
+  const requestReturn = async (order) => {
+    if (order.orderStatus !== 'Delivered') {
+      toast.error('Return is available only after delivery')
+      return
+    }
+
+    if (hasRequestedSupportType(order, 'return')) {
+      toast.error('Return request is already pending for this order')
+      return
+    }
+
+    const reason = window.prompt('Enter return reason (min 8 characters):', 'Product size/quality issue')
+    if (!reason || reason.trim().length < 8) {
+      toast.error('Please provide a valid reason with at least 8 characters')
+      return
+    }
+
+    await submitSupportRequest({
+      orderId: order._id,
+      requestType: 'return',
+      reason: reason.trim()
+    })
+  }
+
+  const requestExchange = async (order) => {
+    if (order.orderStatus !== 'Delivered') {
+      toast.error('Exchange is available only after delivery')
+      return
+    }
+
+    if (hasRequestedSupportType(order, 'exchange')) {
+      toast.error('Exchange request is already pending for this order')
+      return
+    }
+
+    const reason = window.prompt('Enter exchange reason (min 8 characters):', 'Need different size/color')
+    if (!reason || reason.trim().length < 8) {
+      toast.error('Please provide a valid reason with at least 8 characters')
+      return
+    }
+
+    await submitSupportRequest({
+      orderId: order._id,
+      requestType: 'exchange',
+      reason: reason.trim()
+    })
   }
 
   if (isLoading) {
@@ -87,17 +160,77 @@ const OrderHistory = () => {
                   <div className='text-right'>
                     <p className='text-xs uppercase tracking-[0.24em] text-white/45'>Total</p>
                     <p className='mt-1 text-xl font-black text-emerald-200'>{formatAmount(order.totalAmount)}</p>
-                    <button
-                      type='button'
-                      onClick={() => handleDownloadInvoice(order._id)}
-                      disabled={downloadingInvoice}
-                      className='mt-3 inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:opacity-70'
-                    >
-                      <FileDown className='h-3.5 w-3.5' />
-                      Download Invoice
-                    </button>
+                    <div className='mt-3 flex flex-wrap justify-end gap-2'>
+                      <button
+                        type='button'
+                        onClick={() => handleDownloadInvoice(order._id)}
+                        disabled={downloadingInvoice}
+                        className='inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:opacity-70'
+                      >
+                        <FileDown className='h-3.5 w-3.5' />
+                        Download Invoice
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => toggleTrackOrder(order._id)}
+                        className='inline-flex items-center gap-2 rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20'
+                      >
+                        <MapPin className='h-3.5 w-3.5' />
+                        {trackingOrderId === order._id ? 'Hide Tracking' : 'Track Order'}
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => requestReturn(order)}
+                        disabled={supportRequestPending || hasRequestedSupportType(order, 'return')}
+                        className='inline-flex items-center gap-2 rounded-xl border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-500/20'
+                      >
+                        <Undo2 className='h-3.5 w-3.5' />
+                        {hasRequestedSupportType(order, 'return') ? 'Return Requested' : 'Return'}
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => requestExchange(order)}
+                        disabled={supportRequestPending || hasRequestedSupportType(order, 'exchange')}
+                        className='inline-flex items-center gap-2 rounded-xl border border-fuchsia-300/40 bg-fuchsia-500/10 px-3 py-2 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/20'
+                      >
+                        <RefreshCw className='h-3.5 w-3.5' />
+                        {hasRequestedSupportType(order, 'exchange') ? 'Exchange Requested' : 'Exchange'}
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {(order.supportRequests || []).length > 0 ? (
+                  <div className='mt-4 rounded-2xl border border-white/10 bg-slate-900/45 p-4'>
+                    <p className='mb-2 text-xs uppercase tracking-[0.2em] text-white/50'>Support Requests</p>
+                    <div className='flex flex-wrap gap-2'>
+                      {order.supportRequests.map((supportItem, index) => (
+                        <span
+                          key={`${order._id}-support-${index}`}
+                          className='rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80'
+                        >
+                          {String(supportItem.requestType || '').toUpperCase()} • {supportItem.status}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {trackingOrderId === order._id ? (
+                  <div className='mt-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4'>
+                    <p className='mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-white/55'>Tracking Progress</p>
+                    <div className='space-y-2'>
+                      {getTrackingSteps(order.orderStatus).map((stepInfo) => (
+                        <div key={`${order._id}-${stepInfo.step}`} className='flex items-center gap-2'>
+                          <CheckCircle2 className={`h-4 w-4 ${stepInfo.done ? 'text-emerald-300' : 'text-slate-500'}`} />
+                          <span className={`text-sm ${stepInfo.current ? 'font-semibold text-white' : 'text-white/70'}`}>
+                            {stepInfo.step}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className='mt-4 rounded-2xl border border-white/10 bg-slate-900/45 p-4'>
                   <div className='mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-white/45'>

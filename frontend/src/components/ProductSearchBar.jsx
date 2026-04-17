@@ -1,7 +1,7 @@
 import React from 'react'
 import { Search, Sparkles } from 'lucide-react'
 
-const ProductSearchBar = ({searchInput, setsearchInput, onSearchSubmit}) => {
+const ProductSearchBar = ({ searchInput, setsearchInput, activeSearch, onSearchSubmit, onClearSearch }) => {
   return (
     <div className='relative overflow-hidden border-b border-white/10 bg-slate-950 text-white'>
       <div className='absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(236,72,153,0.2),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(34,211,238,0.2),_transparent_26%),linear-gradient(180deg,_rgba(2,6,23,1),_rgba(15,23,42,1))]' />
@@ -33,6 +33,21 @@ const ProductSearchBar = ({searchInput, setsearchInput, onSearchSubmit}) => {
               Search
             </button>
           </form>
+
+          {activeSearch ? (
+            <div className='flex flex-wrap items-center gap-2'>
+              <span className='rounded-full border border-cyan-300/35 bg-cyan-500/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100'>
+                Active search: {activeSearch}
+              </span>
+              <button
+                type='button'
+                onClick={onClearSearch}
+                className='rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/85 hover:bg-white/15'
+              >
+                Remove Search
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

@@ -99,3 +99,17 @@ export const downloadOrderInvoiceApi = async (orderId) => {
         }
     })
 }
+
+export const createOrderSupportRequestApi = async ({ orderId, requestType, reason }) => {
+    return requestWithFallback({
+        method: 'post',
+        paths: [
+            `/payment/orders/${orderId}/support-request`,
+            `/payment/orders/${orderId}/supportRequest`
+        ],
+        data: {
+            requestType,
+            reason
+        }
+    })
+}

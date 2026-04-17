@@ -21,6 +21,14 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    color: {
+        type: String,
+        default: ''
+    },
+    quality: {
+        type: String,
+        default: ''
+    },
     isFeatured: {
         type: Boolean,
         default: false
@@ -44,6 +52,8 @@ const productSchema = new mongoose.Schema({
 
 productSchema.index({name: "text", description: "text", category: "text"});
 productSchema.index({category: 1});
+productSchema.index({color: 1});
+productSchema.index({quality: 1});
 productSchema.index({price: 1});
 productSchema.index({isFeatured: 1, createdAt: -1});
 productSchema.index({approvalStatus: 1, createdAt: -1});

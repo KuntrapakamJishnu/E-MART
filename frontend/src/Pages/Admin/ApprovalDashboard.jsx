@@ -1,7 +1,17 @@
 import React, { useMemo, useState } from 'react'
 import { useUserStore } from '@/store/userStore'
 import { CheckCircle2, Clock3, Package, Search, ShieldCheck, Trash2, UserCheck, Users, X } from 'lucide-react'
-import { useAdminUsersHook, useApproveProductHook, useApproveSellerHook, useDeleteUserByAdminHook, usePendingProductsHook, usePendingSellersHook, useRecentLoginsHook } from '@/hooks/admin.hook'
+import {
+  useAdminUsersHook,
+  useApproveProductHook,
+  useApproveSellerHook,
+  useDeleteUserByAdminHook,
+  useOrderSupportRequestsHook,
+  usePendingProductsHook,
+  usePendingSellersHook,
+  useRecentLoginsHook,
+  useUpdateOrderSupportRequestStatusHook
+} from '@/hooks/admin.hook'
 
 const StatCard = ({ label, value, icon: Icon, tone }) => {
   return (
@@ -30,6 +40,7 @@ const ApprovalDashboard = () => {
   const { data: sellersData, isLoading: sellersLoading } = usePendingSellersHook()
   const { data: productsData, isLoading: productsLoading } = usePendingProductsHook()
   const { data: recentLoginsData, isLoading: recentLoginsLoading } = useRecentLoginsHook()
+  const { data: supportRequestsData, isLoading: supportRequestsLoading } = useOrderSupportRequestsHook()
   const { data: allUsersData, isLoading: allUsersLoading } = useAdminUsersHook({
     page,
     limit: 10,
@@ -38,10 +49,13 @@ const ApprovalDashboard = () => {
   const { mutate: approveSeller, isPending: approvingSeller } = useApproveSellerHook()
   const { mutate: approveProduct, isPending: approvingProduct } = useApproveProductHook()
   const { mutate: deleteUser, isPending: deletingUser } = useDeleteUserByAdminHook()
+  const { mutate: updateSupportRequestStatus, isPending: updatingSupportRequest } = useUpdateOrderSupportRequestStatusHook()
 
   const sellers = sellersData?.sellers || []
   const products = productsData?.products || []
   const recentUsers = recentLoginsData?.users || []
+  const supportRequests = supportRequestsData?.requests || []
+  const pendingSupportRequests = supportRequests.filter((item) => item.status === 'Requested')
   const allUsers = allUsersData?.users || []
   const totalUsers = allUsersData?.totalUsers || 0
   const totalPages = allUsersData?.totalPages || 1
@@ -93,7 +107,7 @@ const ApprovalDashboard = () => {
           <StatCard label='Pending Sellers' value={sellers.length} icon={UserCheck} tone='from-cyan-500 to-blue-500' />
           <StatCard label='Pending Products' value={products.length} icon={Package} tone='from-fuchsia-500 to-rose-500' />
           <StatCard label='Recent Logins' value={recentUsers.length} icon={Users} tone='from-emerald-500 to-teal-500' />
-          <StatCard label='Total Pending' value={sellers.length + products.length} icon={Clock3} tone='from-amber-500 to-orange-500' />
+          <StatCard label='Total Pending' value={sellers.length + products.length + pendingSupportRequests.length} icon={Clock3} tone='from-amber-500 to-orange-500' />
         </div>
 
         <div className='grid gap-6 xl:grid-cols-2'>
@@ -165,6 +179,71 @@ const ApprovalDashboard = () => {
             </div>
           </section>
         </div>
+
+        <section className='mt-6 rounded-[30px] border border-white/15 bg-white/95 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
+          <h2 className='text-xl font-black tracking-[-0.03em] text-slate-900'>Return and Exchange Requests</h2>
+          <p className='mt-1 text-sm text-slate-500'>Review customer support requests and approve or reject them.</p>
+
+          <div className='mt-4 space-y-3'>
+            {supportRequestsLoading ? (
+              <p className='text-sm text-slate-500'>Loading support requests...</p>
+            ) : supportRequests.length === 0 ? (
+              <p className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600'>No return/exchange requests found.</p>
+            ) : (
+              supportRequests.map((requestItem) => (
+                <article key={String(requestItem.requestId)} className='rounded-2xl border border-slate-200 bg-slate-50 p-4'>
+                  <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                    <div>
+                      <p className='text-base font-bold text-slate-900'>
+                        {String(requestItem.requestType || '').toUpperCase()} request • {requestItem.user?.name || 'Unknown'}
+                      </p>
+                      <p className='mt-1 text-sm text-slate-600'>{requestItem.user?.email || 'N/A'}</p>
+                      <p className='mt-1 text-xs text-slate-500'>Order: {requestItem.orderId} • Order Status: {requestItem.orderStatus}</p>
+                      <p className='mt-1 text-xs text-slate-500'>Requested: {new Date(requestItem.requestedAt || requestItem.createdAt).toLocaleString()}</p>
+                      <p className='mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700'>{requestItem.reason}</p>
+                    </div>
+
+                    <div className='flex flex-col items-start gap-2 sm:items-end'>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        requestItem.status === 'Requested'
+                          ? 'bg-amber-100 text-amber-700'
+                          : requestItem.status === 'Approved'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : requestItem.status === 'Rejected'
+                              ? 'bg-rose-100 text-rose-700'
+                              : 'bg-slate-200 text-slate-700'
+                      }`}
+                      >
+                        {requestItem.status}
+                      </span>
+
+                      {requestItem.status === 'Requested' ? (
+                        <div className='flex items-center gap-2'>
+                          <button
+                            onClick={() => updateSupportRequestStatus({ orderId: requestItem.orderId, requestId: requestItem.requestId, status: 'Approved' })}
+                            disabled={updatingSupportRequest}
+                            className='inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60'
+                          >
+                            <CheckCircle2 className='h-4 w-4' />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => updateSupportRequestStatus({ orderId: requestItem.orderId, requestId: requestItem.requestId, status: 'Rejected' })}
+                            disabled={updatingSupportRequest}
+                            className='inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60'
+                          >
+                            <X className='h-4 w-4' />
+                            Reject
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
 
         <section className='mt-6 rounded-[30px] border border-white/15 bg-white/95 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.22)]'>
           <h2 className='text-xl font-black tracking-[-0.03em] text-slate-900'>Newly Logged-In Users</h2>
