@@ -43,7 +43,11 @@ export const getAnalyticsController=async(req,res)=>{
         const data = await getData()
         return res.status(200).json(data)
     } catch (error) {
-        console.log(`error from getAnalutics controller, ${error}`)
+        console.error(`Analytics error: ${error.message}`)
+        return res.status(500).json({ 
+            message: 'Failed to fetch analytics',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -83,7 +87,8 @@ export const getDailySalesData = async(startDate, endDate)=>{
             }
         })
     } catch (error) {
-        console.log(`error from get daily sales data, ${error}`)
+        console.error(`Get daily sales error: ${error.message}`)
+        return null
     }
 }
 
@@ -109,8 +114,8 @@ export const getDailySalesController =async(req, res)=>{
         const {startDate, endDate} = req.query;
 
         if(!startDate || !endDate){
-            return res.status(401).json({
-                message:"Please provide dates"
+            return res.status(400).json({
+                message:"Please provide start and end dates"
             })
         }
 
@@ -119,9 +124,19 @@ export const getDailySalesController =async(req, res)=>{
         const end = new Date(endDate)
 
         const data = await getDailySalesData(start, end)
+        
+        if (!data) {
+            return res.status(500).json({
+                message: 'Failed to fetch daily sales data'
+            })
+        }
 
-        return res.status(201).json(data)
+        return res.status(200).json(data)
     } catch (error) {
-        console.log(`error from getDaily sales controleer, ${error.b}`)
+        console.error(`Daily sales controller error: ${error.message}`)
+        return res.status(500).json({ 
+            message: 'Failed to fetch daily sales',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }

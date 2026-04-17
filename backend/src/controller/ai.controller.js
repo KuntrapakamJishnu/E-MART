@@ -313,8 +313,11 @@ export const chatWithAI = async (req, res) => {
 
     return res.status(200).json({ reply })
   } catch (error) {
-    console.error("AI chat error:", error)
-    return res.status(500).json({ message: "Unable to process AI chat" })
+    console.error('AI chat error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to process AI chat',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -372,8 +375,11 @@ export const getSmartRecommendations = async (req, res) => {
 
     return res.status(200).json({ products: dedupeProducts(mapped).slice(0, limit) })
   } catch (error) {
-    console.error("AI recommendations error:", error)
-    return res.status(500).json({ message: "Unable to generate recommendations" })
+    console.error('AI recommendations error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to generate recommendations',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -402,7 +408,7 @@ export const generateProductDescription = async (req, res) => {
       description: description || buildFallbackDescription({ title, category, keywords, tone })
     })
   } catch (error) {
-    console.error("AI description error:", error)
+    console.error('AI description generation error:', error.message)
     const { title, category, keywords = "", tone = "friendly" } = req.body || {}
 
     if (title && category) {
@@ -411,6 +417,9 @@ export const generateProductDescription = async (req, res) => {
       })
     }
 
-    return res.status(500).json({ message: "Unable to generate description" })
+    return res.status(500).json({ 
+      message: 'Unable to generate description',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }

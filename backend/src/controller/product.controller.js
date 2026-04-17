@@ -91,8 +91,11 @@ export const createProduct = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error, "From create product controller");
-        res.status(500).json({ message: "Server Error" });
+        console.error('Create product error:', error.message)
+        return res.status(500).json({ 
+            message: "Failed to create product",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 };
 
@@ -250,8 +253,11 @@ Only reply with one single keyword from the list above that best matches the que
         return res.status(200).json({fromCached:false, ...payload})
 
     } catch (error) {
-        console.error(`error from getProduct controller:`, error)
-        return res.status(500).json({ message: "Unable to fetch products" })
+        console.error('Get product error:', error.message)
+        return res.status(500).json({ 
+            message: "Failed to fetch products",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -282,8 +288,11 @@ export const getFeatureProduct = async (req, res) => {
 
         return res.status(200).json(featuredProducts);
     } catch (error) {
-        console.error(`error from get feature product:`, error);
-        return res.status(500).json({ message: "Unable to fetch featured products" });
+        console.error('Get featured products error:', error.message)
+        return res.status(500).json({ 
+            message: "Unable to fetch featured products",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -309,8 +318,11 @@ export const toggleFeatureProducts = async (req, res) => {
       product
     })
   } catch (error) {
-    console.log("toggle error:", error)
-    res.status(500).json({ message: "Server error" })
+    console.error('Toggle product error:', error.message)
+    return res.status(500).json({ 
+      message: "Failed to toggle product",
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -355,7 +367,11 @@ export const deleteProduct = async(req,res)=>{
             message:"Product delted succesfully"
         })
     } catch (error) {
-        console.log(`error from delte PRoduct`)
+        console.error('Delete product error:', error.message)
+        return res.status(500).json({ 
+            message: "Failed to delete product",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -421,8 +437,11 @@ export const updateProduct = async (req, res) => {
             product
         })
     } catch (error) {
-        console.error("error from update product:", error)
-        return res.status(500).json({ message: "Unable to update product" })
+        console.error('Update product error:', error.message)
+        return res.status(500).json({ 
+            message: "Unable to update product",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -458,8 +477,11 @@ export const getSingleProduct = async(req,res)=>{
 
         return res.status(200).json(product)
     } catch (error) {
-        console.error(`error from get single Product:`, error)
-        return res.status(500).json({ message: "Unable to fetch product" })
+        console.error('Get single product error:', error.message)
+        return res.status(500).json({ 
+            message: "Unable to fetch product",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -476,8 +498,11 @@ export const getPendingProducts = async (req, res) => {
             products: pendingProducts
         })
     } catch (error) {
-        console.error('error from getPendingProducts:', error)
-        return res.status(500).json({ message: 'Unable to fetch pending products' })
+        console.error('Get pending products error:', error.message)
+        return res.status(500).json({ 
+            message: 'Unable to fetch pending products',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -502,7 +527,10 @@ export const approveProduct = async (req, res) => {
             product
         })
     } catch (error) {
-        console.error('error from approveProduct:', error)
-        return res.status(500).json({ message: 'Unable to approve product' })
+        console.error('Approve product error:', error.message)
+        return res.status(500).json({ 
+            message: 'Unable to approve product',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }

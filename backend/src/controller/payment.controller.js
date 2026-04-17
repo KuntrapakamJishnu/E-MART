@@ -51,8 +51,11 @@ export const createCheckoutSession = async (req, res) => {
             key: ENV.RAZORPAY_KEY_ID,
         });
     } catch (error) {
-        console.error("Razorpay Order Creation Error:", error);
-        res.status(500).json({ message: "Server error during order creation" });
+        console.error('Checkout session creation error:', error.message)
+        return res.status(500).json({ 
+            message: "Failed to create checkout session",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 };
 
@@ -127,7 +130,10 @@ export const checkoutSuccess = async (req, res) => {
             orderId: newOrder._id,
         });
     } catch (error) {
-        console.error("Razorpay Verification Error:", error);
-        res.status(500).json({ message: "Server error during verification" });
+        console.error('Payment verification error:', error.message)
+        return res.status(500).json({ 
+            message: "Failed to verify payment",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 };

@@ -58,10 +58,10 @@ export const sendOtp = async (req, res) => {
       })
     }
   } catch (error) {
-    console.error('Send OTP Error:', error)
+    console.error('Send OTP error:', error.message)
     return res.status(500).json({
       message: 'Failed to send OTP',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
     })
   }
 }
@@ -145,10 +145,10 @@ export const verifyOtp = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Verify OTP Error:', error)
+    console.error('Verify OTP error:', error.message)
     return res.status(500).json({
       message: 'Failed to verify OTP',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
     })
   }
 }
@@ -197,9 +197,10 @@ export const resendOtp = async (req, res) => {
       })
     }
   } catch (error) {
-    console.error('Resend OTP Error:', error)
+    console.error('Resend OTP error:', error.message)
     return res.status(500).json({
-      message: 'Failed to resend OTP'
+      message: 'Failed to resend OTP',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
     })
   }
 }

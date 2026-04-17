@@ -50,8 +50,11 @@ export const createInterviewReview = async (req, res) => {
       review
     })
   } catch (error) {
-    console.error("create interview review error:", error)
-    return res.status(500).json({ message: "Unable to create interview review" })
+    console.error('Create interview review error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to create interview review',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -96,8 +99,11 @@ export const getInterviewReviews = async (req, res) => {
       averageRating
     })
   } catch (error) {
-    console.error("get interview review error:", error)
-    return res.status(500).json({ message: "Unable to fetch interview reviews" })
+    console.error('Get interview reviews error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to fetch interview reviews',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -139,8 +145,11 @@ export const updateInterviewReview = async (req, res) => {
       review
     })
   } catch (error) {
-    console.error("update interview review error:", error)
-    return res.status(500).json({ message: "Unable to update review" })
+    console.error('Update interview review error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to update review',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -161,8 +170,11 @@ export const deleteInterviewReview = async (req, res) => {
 
     return res.status(200).json({ message: "Review deleted successfully" })
   } catch (error) {
-    console.error("delete interview review error:", error)
-    return res.status(500).json({ message: "Unable to delete review" })
+    console.error('Delete interview review error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to delete review',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -194,8 +206,11 @@ export const toggleHelpfulVote = async (req, res) => {
       isHelpfulByViewer: !hasVoted
     })
   } catch (error) {
-    console.error("toggle helpful vote error:", error)
-    return res.status(500).json({ message: "Unable to update helpful vote" })
+    console.error('Toggle helpful vote error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to update helpful vote',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }
 
@@ -290,7 +305,10 @@ export const getInterviewReviewStats = async (req, res) => {
       topQuestionTopics
     })
   } catch (error) {
-    console.error("interview stats error:", error)
-    return res.status(500).json({ message: "Unable to fetch placement insights" })
+    console.error('Interview stats error:', error.message)
+    return res.status(500).json({ 
+      message: 'Unable to fetch placement insights',
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+    })
   }
 }

@@ -11,14 +11,20 @@ import aiRoute from "./src/routes/ai.route.js"
 import interviewReviewRoute from "./src/routes/interviewReview.route.js"
 import otpRoute from "./src/routes/otp.route.js"
 import oauthRoute from "./src/routes/oauth.route.js"
-import { googleAuthCallback } from "./src/controller/oauth.controller.js"
 import cors from 'cors'
 
 const app = express()
 
+const getAllowedOrigins = () => {
+  const frontendUrl = ENV.FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:5173'
+  return [frontendUrl.replace(/\/$/, ''), 'http://localhost:3000', 'http://localhost:5173']
+}
+
 app.use(cors({
-  origin: "https://campuskart-gamma.vercel.app", // OR your current URL
-  credentials: true
+  origin: getAllowedOrigins(),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(cookieParser())
@@ -34,17 +40,26 @@ app.use('/api/ai', aiRoute)
 app.use('/api/interview-review', interviewReviewRoute)
 app.use('/api/auth/otp', otpRoute)
 app.use('/api/auth', oauthRoute)
-app.use('/api/auth/oauth', oauthRoute)
-app.get('/api/auth/google/callback', googleAuthCallback)
+
+const validateRequiredEnv = () => {
+  const required = ['MONGO_URI', 'JWT_TOKEN', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET']
+  const missing = required.filter(key => !process.env[key])
+  
+  if (missing.length > 0) {
+    console.error(`❌ Missing required environment variables: ${missing.join(', ')}`)
+    process.exit(1)
+  }
+}
 
 const startServer = async () => {
   try {
+    validateRequiredEnv()
     await connectDB({ retries: 5, retryDelayMs: 5000 })
     app.listen(ENV.PORT, () => {
-      console.log(`server started ${ENV.PORT}`)
+      console.log(`✅ Server running on port ${ENV.PORT}`)
     })
   } catch (error) {
-    console.error('Failed to start server after retries:', error)
+    console.error('❌ Failed to start server after retries:', error.message)
     process.exit(1)
   }
 }

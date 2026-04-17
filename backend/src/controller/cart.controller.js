@@ -26,8 +26,11 @@ export const addToCart = async (req, res) => {
         });
         
     } catch (error) {
-        console.error(`error from addToCart:`, error);
-        return res.status(500).json({ message: "Unable to add product to cart" });
+        console.error('Add to cart error:', error.message)
+        return res.status(500).json({ 
+            message: "Unable to add product to cart",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -61,8 +64,11 @@ export const removeFromCart = async(req, res)=>{
         })
 
     } catch (error) {
-        console.error(`error from removeFromCart:`, error);
-        return res.status(500).json({ message: "Unable to remove product from cart" });
+        console.error('Remove from cart error:', error.message)
+        return res.status(500).json({ 
+            message: "Unable to remove product from cart",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -90,8 +96,11 @@ export const removeAllCart = async(req,res)=>{
             message:"Cart cleared successfully"
         })
     } catch (error) {
-        console.error(`error from removeAllCart:`, error);
-        return res.status(500).json({ message: "Unable to clear cart" });
+        console.error('Clear cart error:', error.message)
+        return res.status(500).json({ 
+            message: "Unable to clear cart",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -139,7 +148,10 @@ export const updateProductQuantity = async(req,res)=>{
             cartItems: user.cartItems
         });
     } catch (error) {
-        console.error(`error from updateProductQuantity:`, error);
-        return res.status(500).json({ message: "Unable to update cart quantity" });
+        console.error('Update cart quantity error:', error.message)
+        return res.status(500).json({ 
+            message: "Unable to update cart quantity",
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }

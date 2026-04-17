@@ -106,7 +106,11 @@ export const register =async(req ,res)=>{
         })
         
     } catch (error) {
-        console.log(`error from register controller, ${error}`)
+        console.error(`Register error: ${error.message}`)
+        return res.status(500).json({
+            message: 'Registration failed',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -140,6 +144,7 @@ export const login = async(req, res)=>{
 
                  const token  = await jwt.sign({userId:user._id}, ENV.JWT_TOKEN)
                  user.lastLoginAt = new Date()
+                 await user.save()
 
        if(user.email===ENV.ADMIN_EMAIL){
         
@@ -167,7 +172,11 @@ export const login = async(req, res)=>{
 
 
     } catch (error) {
-        console.log(`error from login , ${error}`)
+        console.error(`Login error: ${error.message}`)
+        return res.status(500).json({
+            message: 'Login failed',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -190,9 +199,13 @@ export const getUser = async(req, res)=>{
             await user.save()
         }
 
-        return res.status(201).json(buildUserPayload(user))
+        return res.status(200).json(buildUserPayload(user))
     } catch (error) {
-        console.log(`error from getUser, ${error}`)
+        console.error(`Get user error: ${error.message}`)
+        return res.status(500).json({
+            message: 'Failed to fetch user',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -216,9 +229,13 @@ export const getCartItem = async(req,res)=>{
             })
         }
 
-       return res.status(201).json(user)
+       return res.status(200).json(user)
     } catch (error) {
-        console.log(`error from getCartItem, ${error}`)
+        console.error(`Get cart items error: ${error.message}`)
+        return res.status(500).json({
+            message: 'Failed to fetch cart items',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -259,13 +276,18 @@ export const updateProfile = async(req,res)=>{
         }
 
 
-        return res.status(201).json({
-            message:"Profile updated succesfully"
+        return res.status(200).json({
+            message:"Profile updated successfully",
+            user: buildUserPayload(user)
         })
 
 
     } catch (error) {
-        console.log(`error from updateProfile ,`, error)
+        console.error('Update profile error:', error.message)
+        return res.status(500).json({
+            message: 'Failed to update profile',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -273,11 +295,15 @@ export const updateProfile = async(req,res)=>{
 
 export const logout = async(req, res)=>{
     try {
-         return res.status(201).cookie("token", "", getClearCookieOptions(req)).json({
-            message:`user Logged out successfully`
+         return res.status(200).cookie("token", "", getClearCookieOptions(req)).json({
+            message:`User logged out successfully`
         })
     } catch (error) {
-        console.log(`error from logout`)
+        console.error(`Logout error: ${error.message}`)
+        return res.status(500).json({
+            message: 'Logout failed',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -292,8 +318,11 @@ export const getPendingSellers = async (req, res) => {
             sellers
         })
     } catch (error) {
-        console.log(`error from getPendingSellers, ${error}`)
-        return res.status(500).json({ message: 'Unable to fetch pending sellers' })
+        console.error('Get pending sellers error:', error.message)
+        return res.status(500).json({ 
+            message: 'Unable to fetch pending sellers',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 
@@ -324,8 +353,11 @@ export const approveSeller = async (req, res) => {
             }
         })
     } catch (error) {
-        console.log(`error from approveSeller, ${error}`)
-        return res.status(500).json({ message: 'Unable to approve seller' })
+        console.error('Approve seller error:', error.message)
+        return res.status(500).json({ 
+            message: 'Unable to approve seller',
+            error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+        })
     }
 }
 

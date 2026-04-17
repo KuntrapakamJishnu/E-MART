@@ -156,7 +156,7 @@ export const googleAuthCallback = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Google Auth Error:', error)
+    console.error('Google Auth Error:', error.message)
 
     if (req.method === 'GET') {
       const frontendUrl = ENV.FRONTEND_URL || 'http://localhost:5173'
@@ -166,7 +166,7 @@ export const googleAuthCallback = async (req, res) => {
 
     return res.status(500).json({
       message: 'Google authentication failed',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
     })
   }
 }
@@ -178,10 +178,10 @@ export const getOAuthUrls = (req, res) => {
       google: getGoogleAuthUrl()
     })
   } catch (error) {
-    console.error('Get OAuth URLs Error:', error)
+    console.error('Get OAuth URLs Error:', error.message)
     return res.status(500).json({
       message: 'Failed to get OAuth URLs',
-      error: error.message
+      error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
     })
   }
 }
