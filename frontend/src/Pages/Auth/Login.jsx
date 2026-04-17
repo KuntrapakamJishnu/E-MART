@@ -27,28 +27,7 @@ const Login = () => {
 
     return (
         <div className='relative min-h-screen overflow-hidden bg-[#040712] text-white'>
-            <div
-                className='absolute inset-0 bg-no-repeat md:hidden'
-                style={{
-                    backgroundImage: `url(${loginHoodie})`,
-                    backgroundSize: 'auto 90vh',
-                    backgroundPosition: 'center 56%'
-                }}
-            />
-
-            <div className='pointer-events-none absolute inset-y-0 right-0 hidden w-[58%] md:block'>
-                <div
-                    className='absolute inset-0 bg-no-repeat'
-                    style={{
-                        backgroundImage: `url(${loginHoodie})`,
-                        backgroundSize: 'auto 92vh',
-                        backgroundPosition: 'center 60%'
-                    }}
-                />
-                <div className='absolute inset-0 bg-[linear-gradient(90deg,rgba(4,7,18,0.92)_0%,rgba(4,7,18,0.35)_24%,rgba(4,7,18,0.22)_100%)]' />
-                <div className='absolute inset-0 bg-[radial-gradient(circle_at_78%_35%,rgba(56,189,248,0.16),transparent_46%),radial-gradient(circle_at_65%_80%,rgba(245,158,11,0.14),transparent_44%)]' />
-                <div className='absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent' />
-            </div>
+            <div className='absolute inset-0 bg-no-repeat md:hidden' />
 
             <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.14),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_32%),linear-gradient(170deg,_rgba(3,7,18,0.62),_rgba(10,20,36,0.76))]' />
             <div className='pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.22)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.22)_1px,transparent_1px)] [background-size:32px_32px]' />
@@ -56,7 +35,20 @@ const Login = () => {
             <div className='pointer-events-none absolute right-0 bottom-20 h-80 w-80 rounded-full bg-blue-400/14 blur-3xl' />
 
             <div className='relative flex min-h-screen items-center justify-center px-5 py-8 sm:px-6 sm:py-10'>
-                <div className='w-full max-w-lg'>
+                <div className='w-full max-w-6xl lg:grid lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10'>
+                    <div className='mb-8 hidden lg:block'>
+                        <div className='relative overflow-hidden rounded-[34px] border border-white/15 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-6 shadow-[0_30px_90px_rgba(2,6,23,0.5)] backdrop-blur-xl'>
+                            <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(56,189,248,0.16),transparent_46%),radial-gradient(circle_at_55%_78%,rgba(245,158,11,0.14),transparent_44%)]' />
+                            <div className='pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-white/25 to-transparent' />
+                            <img
+                                src={loginHoodie}
+                                alt='Login illustration'
+                                className='relative mx-auto h-[72vh] max-h-[760px] w-auto object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.45)]'
+                            />
+                        </div>
+                    </div>
+
+                    <div className='w-full max-w-lg justify-self-center'>
                     <div className='mb-8 flex justify-center'>
                         <div className='h-24 w-24 overflow-hidden rounded-[30px] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.42)] ring-1 ring-white/25 sm:h-28 sm:w-28 md:h-32 md:w-32'>
                             <img src={CompanyLogo} alt='Company logo' className='h-full w-full object-cover' />
@@ -173,6 +165,7 @@ const Login = () => {
                                         </div>
                                     </div>
                                 </form>
+                            </div>
                             </div>
                         </div>
                     </div>
