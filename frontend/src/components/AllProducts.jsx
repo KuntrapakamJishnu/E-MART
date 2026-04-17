@@ -1,5 +1,5 @@
 import { useGetAllProductHook } from '@/hooks/product.hook'
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Spinner } from './ui/spinner'
 import { ArrowRight } from 'lucide-react'
@@ -8,6 +8,7 @@ import loginHoodie from '@/assets/login_hoodie.png'
 const formatInr = (value) => `Rs. ${Number(value || 0).toFixed(2)}`
 
 const AllProducts = ({ page, setpage, activeSearch, category, priceRange, color, quality },) => {
+  const [expandedDescriptions, setExpandedDescriptions] = useState({})
   const {data, isLoading} = useGetAllProductHook({
     page,
     search:activeSearch,
@@ -25,6 +26,14 @@ const AllProducts = ({ page, setpage, activeSearch, category, priceRange, color,
  
   const navigateSingleProduct = (id) => {
     navigate(`/product/${id}`)
+  }
+
+  const toggleDescription = (event, productId) => {
+    event.stopPropagation()
+    setExpandedDescriptions((prev) => ({
+      ...prev,
+      [productId]: !prev[productId]
+    }))
   }
 
   const products = data?.products || []
@@ -47,6 +56,11 @@ const AllProducts = ({ page, setpage, activeSearch, category, priceRange, color,
           const isOneFamilyHoodie = /hoodie/i.test(String(item?.name || '')) && /vit-?ap/i.test(String(item?.name || ''))
           const imageSrc = isOneFamilyHoodie ? loginHoodie : (item.image || item.imageUrl)
           const productName = isOneFamilyHoodie ? 'One Family' : item.name
+          const isDescriptionExpanded = Boolean(expandedDescriptions[item._id])
+          const productDescription = String(item.description || 'Premium campus-ready product.')
+          const descriptionPreview = productDescription.length > 130
+            ? `${productDescription.slice(0, 130).trim()}...`
+            : productDescription
 
           return(
             <div 
@@ -75,9 +89,16 @@ const AllProducts = ({ page, setpage, activeSearch, category, priceRange, color,
                   <h3 className='text-gray-900 font-medium text-base leading-tight line-clamp-2'>
                     {productName}
                   </h3>
-                  <p className='text-xs leading-5 text-slate-600 line-clamp-2'>
-                    {item.description || 'Premium campus-ready product.'}
+                  <p className='text-xs leading-5 text-slate-600'>
+                    {isDescriptionExpanded ? productDescription : descriptionPreview}
                   </p>
+                  <button
+                    type='button'
+                    onClick={(event) => toggleDescription(event, item._id)}
+                    className='text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700 hover:text-cyan-800'
+                  >
+                    {isDescriptionExpanded ? 'Collapse Description' : 'View Description'}
+                  </button>
                   <p className='text-2xl font-bold text-gray-900'>
                     {formatInr(item.price)}
                   </p>

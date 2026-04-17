@@ -463,6 +463,7 @@ const ProductDashboard = () => {
                   </th>
                   <th className='px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider'>Product</th>
                   <th className='px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider'>Category</th>
+                  <th className='px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider'>Description</th>
                   <th className='px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider'>Price</th>
                   <th className='px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider'>Featured</th>
                   <th className='px-6 py-3 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider'>Action</th>
@@ -530,6 +531,20 @@ const ProductDashboard = () => {
                       </td>
                       <td className='px-6 py-4'>
                         {isInlineEditing ? (
+                          <textarea
+                            value={inlineForm.description}
+                            onChange={(e) => setInlineForm((prev) => ({ ...prev, description: e.target.value }))}
+                            className='min-h-[64px] w-[240px] rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 outline-none focus:border-cyan-400'
+                            placeholder='Description'
+                          />
+                        ) : (
+                          <p className='max-w-[260px] text-xs leading-5 text-slate-600'>
+                            {item.description || 'No description available'}
+                          </p>
+                        )}
+                      </td>
+                      <td className='px-6 py-4'>
+                        {isInlineEditing ? (
                           <input
                             type='number'
                             value={inlineForm.price}
@@ -589,7 +604,7 @@ const ProductDashboard = () => {
                                 onClick={() => createToggle(item._id)}
                                 className='inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100'
                               >
-                                Toggle
+                                Toggle Featured
                               </button>
                               <button
                                 onClick={() => openDeleteDialog(item)}
@@ -607,7 +622,7 @@ const ProductDashboard = () => {
                 })}
                 {sortedProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className='px-6 py-12 text-center text-sm text-slate-500'>No products found for this search.</td>
+                    <td colSpan={7} className='px-6 py-12 text-center text-sm text-slate-500'>No products found for this search.</td>
                   </tr>
                 ) : null}
               </tbody>

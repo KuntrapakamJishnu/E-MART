@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 
 const CustomerReview = () => {
-  // Sample review data - replace with actual API data
-  const reviews = [
+  const [reviews, setReviews] = useState([
     {
       id: 1,
       name: "Rahul Sharma",
@@ -43,15 +42,24 @@ const CustomerReview = () => {
       verified: false,
       helpful: 12
     }
-  ]
+  ])
 
   const [filter, setFilter] = useState('all')
   const [sortBy, setSortBy] = useState('recent')
-  const [expandedReviewId, setExpandedReviewId] = useState(reviews[0]?.id || null)
+  const [expandedReviewIds, setExpandedReviewIds] = useState({ [reviews[0]?.id || 1]: true })
+  const [likedReviews, setLikedReviews] = useState({})
+  const [reviewForm, setReviewForm] = useState({
+    name: '',
+    rating: 5,
+    title: '',
+    comment: ''
+  })
 
   // Calculate rating statistics
   const totalReviews = reviews.length
-  const averageRating = (reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews).toFixed(1)
+  const averageRating = totalReviews > 0
+    ? (reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews).toFixed(1)
+    : '0.0'
   const ratingCounts = [5, 4, 3, 2, 1].map(rating => 
     reviews.filter(review => review.rating === rating).length
   )
@@ -68,6 +76,65 @@ const CustomerReview = () => {
   })
 
   const visibleReviews = sortedReviews.slice(0, 3)
+
+  const toggleExpandReview = (reviewId) => {
+    setExpandedReviewIds((prev) => ({
+      ...prev,
+      [reviewId]: !prev[reviewId]
+    }))
+  }
+
+  const toggleLoveReview = (reviewId) => {
+    setLikedReviews((prev) => {
+      const alreadyLiked = Boolean(prev[reviewId])
+
+      setReviews((current) => current.map((review) => {
+        if (review.id !== reviewId) return review
+        const nextHelpful = alreadyLiked
+          ? Math.max(0, Number(review.helpful || 0) - 1)
+          : Number(review.helpful || 0) + 1
+
+        return {
+          ...review,
+          helpful: nextHelpful
+        }
+      }))
+
+      return {
+        ...prev,
+        [reviewId]: !alreadyLiked
+      }
+    })
+  }
+
+  const handleReviewSubmit = (event) => {
+    event.preventDefault()
+
+    if (!reviewForm.name.trim() || !reviewForm.title.trim() || !reviewForm.comment.trim()) {
+      return
+    }
+
+    const newReview = {
+      id: Date.now(),
+      name: reviewForm.name.trim(),
+      rating: Number(reviewForm.rating || 5),
+      reviewedAt: new Date().toISOString(),
+      title: reviewForm.title.trim(),
+      comment: reviewForm.comment.trim(),
+      verified: false,
+      helpful: 0
+    }
+
+    setReviews((prev) => [newReview, ...prev])
+    setExpandedReviewIds((prev) => ({ ...prev, [newReview.id]: true }))
+    setReviewForm({ name: '', rating: 5, title: '', comment: '' })
+  }
+
+  const getPreviewText = (text = '', limit = 145) => {
+    const content = String(text || '').trim()
+    if (content.length <= limit) return content
+    return `${content.slice(0, limit).trim()}...`
+  }
 
   // Star rendering function
   const renderStars = (rating) => {
@@ -173,10 +240,41 @@ const CustomerReview = () => {
               </button>
             )}
 
-            {/* Write Review Button */}
-            <button className='w-full mt-6 bg-black text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-lg'>
-              Write a Review
-            </button>
+            <form onSubmit={handleReviewSubmit} className='mt-6 space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-3'>
+              <p className='text-xs font-semibold uppercase tracking-[0.2em] text-gray-600'>Write a Review</p>
+              <input
+                value={reviewForm.name}
+                onChange={(e) => setReviewForm((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder='Your name'
+                className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-gray-500'
+              />
+              <select
+                value={reviewForm.rating}
+                onChange={(e) => setReviewForm((prev) => ({ ...prev, rating: Number(e.target.value) }))}
+                className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-gray-500'
+              >
+                <option value={5}>5 Stars</option>
+                <option value={4}>4 Stars</option>
+                <option value={3}>3 Stars</option>
+                <option value={2}>2 Stars</option>
+                <option value={1}>1 Star</option>
+              </select>
+              <input
+                value={reviewForm.title}
+                onChange={(e) => setReviewForm((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder='Review title'
+                className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-gray-500'
+              />
+              <textarea
+                value={reviewForm.comment}
+                onChange={(e) => setReviewForm((prev) => ({ ...prev, comment: e.target.value }))}
+                placeholder='Share your experience'
+                className='min-h-20 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-gray-500'
+              />
+              <button className='w-full rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-gray-800'>
+                Submit Review
+              </button>
+            </form>
           </div>
         </div>
 
@@ -196,7 +294,7 @@ const CustomerReview = () => {
                 {/* Review Header */}
                 <button
                   type='button'
-                  onClick={() => setExpandedReviewId((current) => (current === review.id ? null : review.id))}
+                  onClick={() => toggleExpandReview(review.id)}
                   className='flex w-full items-start justify-between gap-4 text-left'
                 >
                   <div className='flex items-center gap-3'>
@@ -225,7 +323,7 @@ const CustomerReview = () => {
                     </div>
                   </div>
                   <span className='rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-500 transition-colors duration-300 hover:bg-gray-100'>
-                    {expandedReviewId === review.id ? 'Collapse' : 'Expand'}
+                    {expandedReviewIds[review.id] ? 'Collapse' : 'Expand'}
                   </span>
                 </button>
 
@@ -240,17 +338,20 @@ const CustomerReview = () => {
                 </h4>
 
                 {/* Review Comment */}
-                <p className={`text-gray-700 leading-relaxed mb-4 transition-all duration-300 ${expandedReviewId === review.id ? '' : 'line-clamp-2'}`}>
-                  {review.comment}
+                <p className='text-gray-700 leading-relaxed mb-4 transition-all duration-300'>
+                  {expandedReviewIds[review.id] ? review.comment : getPreviewText(review.comment)}
                 </p>
 
                 {/* Review Footer */}
                 <div className='flex items-center gap-4 pt-4 border-t border-gray-200'>
-                  <button className='flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900'>
+                  <button
+                    onClick={() => toggleLoveReview(review.id)}
+                    className={`flex items-center gap-2 text-sm ${likedReviews[review.id] ? 'text-rose-600' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
                     <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5' />
                     </svg>
-                    Helpful ({review.helpful})
+                    {likedReviews[review.id] ? 'Loved' : 'Love'} ({review.helpful})
                   </button>
                   <button className='text-sm text-gray-600 hover:text-gray-900'>
                     Report

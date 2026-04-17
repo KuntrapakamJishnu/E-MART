@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAddToCartHook } from '@/hooks/cart.hook';
 
@@ -8,6 +8,7 @@ const FeaturedProducts = ({ item }) => {
   const { mutate: addToCart, isPending: addToCartPending } = useAddToCartHook()
   const imageSrc = item?.imageUrl || item?.image || 'https://via.placeholder.com/600x600?text=E-Mart'
   const productId = item?._id
+  const [showFullDescription, setShowFullDescription] = useState(false)
 
   const handlePointerMove = (event) => {
     const card = cardRef.current
@@ -74,7 +75,19 @@ const FeaturedProducts = ({ item }) => {
         <div className="flex flex-1 flex-col gap-3 bg-white px-5 py-4">
           <div className="space-y-1.5">
             <h3 className="text-xl font-semibold text-slate-900 line-clamp-2">{item?.name}</h3>
-            <p className="text-sm leading-5 text-slate-500 line-clamp-2">{item?.description}</p>
+            <p className={`text-sm leading-5 text-slate-500 ${showFullDescription ? '' : 'line-clamp-2'}`}>
+              {item?.description || 'No description added yet for this product.'}
+            </p>
+            <button
+              type='button'
+              onClick={(event) => {
+                event.stopPropagation()
+                setShowFullDescription((prev) => !prev)
+              }}
+              className='text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700 hover:text-cyan-800'
+            >
+              {showFullDescription ? 'Collapse Description' : 'View Description'}
+            </button>
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-3">

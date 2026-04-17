@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGetFeaturedProcut } from '@/hooks/product.hook'
 import FeaturedProducts from './FeaturedProducts'
 import Footer from '@/components/Footer'
@@ -43,6 +43,27 @@ const Reveal = ({ children, className = '', delay = 0 }) => {
 
 const Home = () => {
     const { data: featuredProducts = [], isLoading } = useGetFeaturedProcut()
+
+  const prioritizedFeaturedProducts = useMemo(() => {
+    const preferredKeywords = [/hoodie/i, /jeans?/i, /pants?/i]
+
+    const scored = [...featuredProducts].map((item) => {
+      const text = `${item?.name || ''} ${item?.description || ''}`
+      const score = preferredKeywords.reduce((acc, pattern, index) => {
+        if (pattern.test(text)) {
+          return acc + (preferredKeywords.length - index)
+        }
+        return acc
+      }, 0)
+
+      return { item, score }
+    })
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .map((entry) => entry.item)
+      .slice(0, 6)
+  }, [featuredProducts])
 
   useEffect(() => {
     const heroImage = new Image()
@@ -127,11 +148,24 @@ const Home = () => {
               <h2 className='mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl'>Featured Products</h2>
             </div>
             <div className='hidden rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500 shadow-sm sm:block'>
-              {isLoading ? 'Loading featured products...' : `${featuredProducts.length} items`} 
+              {isLoading ? 'Loading featured products...' : `${prioritizedFeaturedProducts.length} items`} 
             </div>
           </Reveal>
 
-          {featuredProducts.length === 0 ? (
+          <Reveal className='mb-6'>
+            <div className='flex flex-wrap gap-2'>
+              {['Hoodie', 'Jeans', 'Pants'].map((tag) => (
+                <span
+                  key={tag}
+                  className='rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600'
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </Reveal>
+
+          {prioritizedFeaturedProducts.length === 0 ? (
             <Reveal>
               <div className='rounded-[32px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm'>
                 <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl'>✨</div>
@@ -143,7 +177,7 @@ const Home = () => {
             </Reveal>
           ) : (
             <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-3'>
-              {featuredProducts.map((item, index) => (
+              {prioritizedFeaturedProducts.map((item, index) => (
                 <Reveal key={item?._id || item?.id || item?.name} delay={index * 90}>
                   <FeaturedProducts item={item} />
                 </Reveal>
