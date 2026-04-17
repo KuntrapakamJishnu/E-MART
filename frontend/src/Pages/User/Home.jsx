@@ -1,6 +1,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useGetFeaturedProcut } from '@/hooks/product.hook'
+import { useGetAllProductHook } from '@/hooks/product.hook'
 import FeaturedProducts from './FeaturedProducts'
 import Footer from '@/components/Footer'
 import CustomerReview from '@/components/CustomerReview'
@@ -43,6 +44,11 @@ const Reveal = ({ children, className = '', delay = 0 }) => {
 
 const Home = () => {
     const { data: featuredProducts = [], isLoading } = useGetFeaturedProcut()
+    const { data: allProductsData, isLoading: allProductsLoading } = useGetAllProductHook({
+      page: 1,
+      limit: 30
+    })
+    const allProducts = useMemo(() => allProductsData?.products || [], [allProductsData?.products])
 
   const prioritizedFeaturedProducts = useMemo(() => {
     const preferredKeywords = [/hoodie/i, /jeans?/i, /pants?/i]
@@ -64,6 +70,32 @@ const Home = () => {
       .map((entry) => entry.item)
       .slice(0, 6)
   }, [featuredProducts])
+
+  const fallbackProducts = useMemo(() => {
+    const preferredKeywords = [/hoodie/i, /jeans?/i, /pants?/i]
+
+    const scored = [...allProducts].map((item) => {
+      const text = `${item?.name || ''} ${item?.description || ''}`
+      const score = preferredKeywords.reduce((acc, pattern, index) => {
+        if (pattern.test(text)) {
+          return acc + (preferredKeywords.length - index)
+        }
+        return acc
+      }, 0)
+
+      return { item, score }
+    })
+
+    return scored
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score
+        return new Date(b.item?.createdAt || 0).getTime() - new Date(a.item?.createdAt || 0).getTime()
+      })
+      .map((entry) => entry.item)
+      .slice(0, 6)
+  }, [allProducts])
+
+  const displayProducts = prioritizedFeaturedProducts.length > 0 ? prioritizedFeaturedProducts : fallbackProducts
 
   useEffect(() => {
     const heroImage = new Image()
@@ -148,7 +180,7 @@ const Home = () => {
               <h2 className='mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl'>Featured Products</h2>
             </div>
             <div className='hidden rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500 shadow-sm sm:block'>
-              {isLoading ? 'Loading featured products...' : `${prioritizedFeaturedProducts.length} items`} 
+              {(isLoading || allProductsLoading) ? 'Loading products...' : `${displayProducts.length} items`} 
             </div>
           </Reveal>
 
@@ -165,24 +197,33 @@ const Home = () => {
             </div>
           </Reveal>
 
-          {prioritizedFeaturedProducts.length === 0 ? (
+          {displayProducts.length === 0 ? (
             <Reveal>
               <div className='rounded-[32px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm'>
                 <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl'>✨</div>
-                <h3 className='mt-5 text-2xl font-bold'>No featured products yet</h3>
+                <h3 className='mt-5 text-2xl font-bold'>No products yet</h3>
                 <p className='mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-500'>
-                  Once an admin marks products as featured, they will appear here with the new premium card layout.
+                  Products will appear here once they are added by sellers/admin.
                 </p>
               </div>
             </Reveal>
           ) : (
-            <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-3'>
-              {prioritizedFeaturedProducts.map((item, index) => (
+            <>
+              {prioritizedFeaturedProducts.length === 0 ? (
+                <Reveal className='mb-4'>
+                  <p className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
+                    Featured unavailable now. Showing latest curated products.
+                  </p>
+                </Reveal>
+              ) : null}
+              <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-3'>
+                {displayProducts.map((item, index) => (
                 <Reveal key={item?._id || item?.id || item?.name} delay={index * 90}>
                   <FeaturedProducts item={item} />
                 </Reveal>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 

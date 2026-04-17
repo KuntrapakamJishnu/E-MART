@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
-import { Mail, UserRound, Sparkles, Copy, CheckCircle2 } from 'lucide-react'
+import { Mail, UserRound, Sparkles, Copy, CheckCircle2, Clock3, MessageSquareText, PhoneCall } from 'lucide-react'
 import AdminImage from '@/assets/Admin.jpeg'
 
 const CONTACT_EMAIL = 'kjishnu973@gmail.com'
 
 const ContactUs = () => {
   const [copied, setCopied] = useState(false)
+  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [submitted, setSubmitted] = useState(false)
 
   const copyEmail = async () => {
     try {
@@ -15,6 +17,22 @@ const ContactUs = () => {
     } catch {
       setCopied(false)
     }
+  }
+
+  const submitHandler = (event) => {
+    event.preventDefault()
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setSubmitted(false)
+      return
+    }
+
+    const mailto = `mailto:${CONTACT_EMAIL}?subject=CampusKart%20Contact%20from%20${encodeURIComponent(form.name)}&body=${encodeURIComponent(
+      `Name: ${form.name}\nEmail: ${form.email}\n\nMessage:\n${form.message}`
+    )}`
+
+    window.location.href = mailto
+    setSubmitted(true)
+    setForm({ name: '', email: '', message: '' })
   }
 
   return (
@@ -76,6 +94,67 @@ const ContactUs = () => {
                 {copied ? <CheckCircle2 className='h-4 w-4 text-emerald-300' /> : <Copy className='h-4 w-4' />}
                 {copied ? 'Copied' : 'Copy Email'}
               </button>
+            </div>
+          </div>
+        </div>
+
+        <div className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
+          <form
+            onSubmit={submitHandler}
+            className='rounded-3xl border border-white/15 bg-white/[0.06] p-6 backdrop-blur-xl'
+          >
+            <p className='text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200'>Send a message</p>
+            <h2 className='mt-2 text-2xl font-black tracking-tight text-white'>Quick Contact Form</h2>
+
+            <div className='mt-5 space-y-3'>
+              <input
+                value={form.name}
+                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder='Your name'
+                className='h-11 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/45 outline-none focus:border-cyan-300/80'
+              />
+              <input
+                value={form.email}
+                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                placeholder='Your email'
+                className='h-11 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/45 outline-none focus:border-cyan-300/80'
+              />
+              <textarea
+                value={form.message}
+                onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
+                placeholder='How can we help you?'
+                className='min-h-28 w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/45 outline-none focus:border-cyan-300/80'
+              />
+              <button className='inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-5 text-sm font-semibold text-white transition-transform hover:scale-[1.01]'>
+                <MessageSquareText className='h-4 w-4' />
+                Send Message
+              </button>
+              {submitted ? <p className='text-sm text-emerald-300'>Thanks. Your email app should open with your drafted message.</p> : null}
+            </div>
+          </form>
+
+          <div className='space-y-4'>
+            <div className='rounded-3xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-xl'>
+              <p className='inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/70'>
+                <Clock3 className='h-4 w-4 text-cyan-300' />
+                Typical response
+              </p>
+              <p className='mt-3 text-2xl font-black text-white'>Within 24 Hours</p>
+              <p className='mt-2 text-sm text-white/65'>Most campus and product support questions are answered on the same day.</p>
+            </div>
+
+            <div className='rounded-3xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-xl'>
+              <p className='inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/70'>
+                <PhoneCall className='h-4 w-4 text-fuchsia-300' />
+                Help Topics
+              </p>
+              <div className='mt-3 flex flex-wrap gap-2'>
+                {['Orders', 'Returns', 'Exchanges', 'Seller Support', 'Placement Reviews'].map((topic) => (
+                  <span key={topic} className='rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85'>
+                    {topic}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

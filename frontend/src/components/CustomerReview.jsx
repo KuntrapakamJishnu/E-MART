@@ -338,13 +338,20 @@ const CustomerReview = () => {
                 </h4>
 
                 {/* Review Comment */}
-                <p className='text-gray-700 leading-relaxed mb-4 transition-all duration-300'>
-                  {expandedReviewIds[review.id] ? review.comment : getPreviewText(review.comment)}
-                </p>
+                {!expandedReviewIds[review.id] ? (
+                  <p className='mb-4 text-gray-700 leading-relaxed transition-all duration-300'>
+                    {getPreviewText(review.comment, 95)}
+                  </p>
+                ) : (
+                  <div className='mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3'>
+                    <p className='text-gray-700 leading-relaxed'>{review.comment}</p>
+                  </div>
+                )}
 
                 {/* Review Footer */}
                 <div className='flex items-center gap-4 pt-4 border-t border-gray-200'>
                   <button
+                    type='button'
                     onClick={() => toggleLoveReview(review.id)}
                     className={`flex items-center gap-2 text-sm ${likedReviews[review.id] ? 'text-rose-600' : 'text-gray-600 hover:text-gray-900'}`}
                   >
@@ -353,7 +360,7 @@ const CustomerReview = () => {
                     </svg>
                     {likedReviews[review.id] ? 'Loved' : 'Love'} ({review.helpful})
                   </button>
-                  <button className='text-sm text-gray-600 hover:text-gray-900'>
+                  <button type='button' className='text-sm text-gray-600 hover:text-gray-900'>
                     Report
                   </button>
                 </div>
