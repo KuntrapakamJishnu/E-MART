@@ -14,7 +14,6 @@ export const useRegisterHook = ()=>{
     return useMutation({
         mutationFn:registerApi,
         onSuccess:(data)=>{
-            console.log(data)
             toast.success(data.message)
             setUser(data.user)
             navigate('/')
@@ -34,7 +33,6 @@ export const useLoginHook = ()=>{
     return useMutation({
         mutationFn:loginApi,
         onSuccess:(data)=>{
-            console.log(data)
             toast.success(data.message)
             setUser(data.user)
             queryClient.invalidateQueries({ queryKey: ['getUser'] })
@@ -53,11 +51,11 @@ export const useLogoutHook = ()=>{
     return useMutation({
         mutationFn:logoutApi,
         onSuccess:(data)=>{
-            
             toast.success(data.message)
             clearUser()
-            queryClient.invalidateQueries({ queryKey: ['getUser'] })
-            navigate('/login')
+            queryClient.removeQueries({ queryKey: ['getUser'] })
+            queryClient.removeQueries({ queryKey: ['getCartItem'] })
+            navigate('/login', { replace: true })
         },
         onError:(err)=>{
             toast.error(getErrorMessage(err, 'Logout failed'))
@@ -73,7 +71,6 @@ export const useUpdateProfileHook = ()=>{
         mutationFn:updateProfile,
         onSuccess:(data)=>{
             toast.success(data.message)
-            console.log(data)
             queryClient.invalidateQueries({ queryKey: ['getUser'] })
         },
         onError:(err)=>{

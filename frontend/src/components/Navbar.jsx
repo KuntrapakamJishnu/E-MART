@@ -17,11 +17,15 @@ const Navbar = () => {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const clearUser = useUserStore((state) => state.clearUser)
-  const { mutate } = useLogoutHook()
+  const { mutateAsync } = useLogoutHook()
     
-  const logoutHandler = () => {
-    mutate()
+  const logoutHandler = async () => {
     clearUser()
+    try {
+      await mutateAsync()
+    } finally {
+      navigate('/login', { replace: true })
+    }
   }
 
   const cartCount = user?.cartItems?.length || 0

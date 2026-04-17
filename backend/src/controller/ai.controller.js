@@ -257,6 +257,12 @@ export const chatWithAI = async (req, res) => {
 
     const orderTrackingIntent = /(track|tracking|status|where.*order|my order|delivery|shipment|order update)/i.test(String(message))
     if (orderTrackingIntent) {
+      if (!req.id) {
+        return res.status(200).json({
+          reply: "I can help with order tracking after you sign in. For product help, ask me about budget, category, or style."
+        })
+      }
+
       const trackingReply = await buildOrderTrackingReply(req.id, message)
       return res.status(200).json({ reply: trackingReply })
     }
