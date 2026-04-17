@@ -7,6 +7,16 @@ const toCleanNumber = (value, fallback = 0) => {
 
 export const createInterviewReview = async (req, res) => {
   try {
+    const accountRole = String(req?.user?.role || '').toLowerCase()
+    const isAdminOwner = Boolean(req?.user?.owner)
+    const canShareInterviewExperience = ['student', 'seller', 'admin'].includes(accountRole) || isAdminOwner
+
+    if (!req?.user || !canShareInterviewExperience) {
+      return res.status(403).json({
+        message: 'Only logged-in student or seller accounts can post interview experiences'
+      })
+    }
+
     const {
       companyName,
       role,

@@ -39,7 +39,8 @@ const PlacementReviews = () => {
   const user = useUserStore((state) => state.user)
   const role = user?.role || (user?.owner ? 'admin' : 'student')
   const isAdmin = role === 'admin'
-  const canReviewPost = Boolean(user?._id)
+  const normalizedRole = String(role || '').toLowerCase()
+  const canReviewPost = Boolean(user?._id) && ['student', 'seller', 'admin'].includes(normalizedRole)
   const [companyFilter, setCompanyFilter] = useState('')
   const [minRatingFilter, setMinRatingFilter] = useState(0)
   const [editingId, setEditingId] = useState(null)
@@ -228,6 +229,7 @@ const PlacementReviews = () => {
               ) : null}
             </div>
             <p className='text-sm text-slate-500'>Document interview rounds and insights so the next student is better prepared.</p>
+            <p className='mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>Open for all logged-in student buyers and sellers</p>
 
             <form onSubmit={submitHandler} className='mt-4 space-y-3'>
               <div className='grid gap-3 sm:grid-cols-2'>
@@ -332,6 +334,10 @@ const PlacementReviews = () => {
               >
                 {posting || updating ? 'Saving...' : editingId ? 'Update Review' : 'Post Review'}
               </button>
+
+              {!canReviewPost ? (
+                <p className='text-xs text-rose-600'>Login required to share interview experience.</p>
+              ) : null}
             </form>
           </section>
 
