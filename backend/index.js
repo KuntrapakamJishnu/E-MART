@@ -17,9 +17,9 @@ import cors from 'cors'
 const app = express()
 
 app.use(cors({
-  origin: ENV.CLIENT_URL || 'http://localhost:5173',
-  credentials: true,
-}))
+  origin: "https://campuskart-gamma.vercel.app", // OR your current URL
+  credentials: true
+}));
 
 app.use(cookieParser())
 app.use(express.json())
@@ -33,6 +33,7 @@ app.use('/api/analytic', analyticRoute)
 app.use('/api/ai', aiRoute)
 app.use('/api/interview-review', interviewReviewRoute)
 app.use('/api/auth/otp', otpRoute)
+app.use('/api/auth', oauthRoute)
 app.use('/api/auth/oauth', oauthRoute)
 app.get('/api/auth/google/callback', googleAuthCallback)
 

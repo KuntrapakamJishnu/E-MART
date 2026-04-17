@@ -16,6 +16,17 @@ const getGoogleRedirectUri = () => {
   return ENV.GOOGLE_CALLBACK_URL || `${ENV.BACKEND_URL || 'https://campuskartai.onrender.com'}/api/auth/google/callback`
 }
 
+export const getGoogleAuthUrl = () => {
+  const redirectUri = getGoogleRedirectUri()
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
+    client_id: ENV.GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid email profile'
+  }).toString()}`
+}
+
 const buildGoogleUserFromCode = async (code) => {
   const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -155,17 +166,8 @@ export const googleAuthCallback = async (req, res) => {
 // Get OAuth URLs for frontend
 export const getOAuthUrls = (req, res) => {
   try {
-    const redirectUri = getGoogleRedirectUri()
-
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
-      client_id: ENV.GOOGLE_CLIENT_ID,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: 'openid email profile'
-    }).toString()}`
-
     return res.status(200).json({
-      google: googleAuthUrl
+      google: getGoogleAuthUrl()
     })
   } catch (error) {
     console.error('Get OAuth URLs Error:', error)
