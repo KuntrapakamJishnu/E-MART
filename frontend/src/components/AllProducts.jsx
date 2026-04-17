@@ -3,6 +3,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Spinner } from './ui/spinner'
 import { ArrowRight } from 'lucide-react'
+import loginHoodie from '@/assets/login_hoodie.png'
 
 const AllProducts = ({page, setpage, activeSearch, category, priceRange},) => {
   const {data, isLoading} = useGetAllProductHook({
@@ -39,6 +40,10 @@ const AllProducts = ({page, setpage, activeSearch, category, priceRange},) => {
       ) : (
       <div className='grid grid-cols-1 gap-6 py-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
         {products.map((item) => {
+          const isOneFamilyHoodie = /hoodie/i.test(String(item?.name || '')) && /vit-?ap/i.test(String(item?.name || ''))
+          const imageSrc = isOneFamilyHoodie ? loginHoodie : (item.image || item.imageUrl)
+          const productName = isOneFamilyHoodie ? 'One Family' : item.name
+
           return(
             <div 
               key={item._id}
@@ -49,11 +54,11 @@ const AllProducts = ({page, setpage, activeSearch, category, priceRange},) => {
               <div className='relative w-full h-[240px] overflow-hidden bg-gradient-to-br from-slate-100 via-white to-slate-200'>
                 <div className='absolute inset-0 bg-gradient-to-t from-slate-900/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
                 <img 
-                  src={item.image || item.imageUrl} 
+                  src={imageSrc} 
                   className='w-full h-full object-cover transition-transform duration-500 group-hover:scale-110' 
                   loading='lazy'
                   decoding='async'
-                  alt={item.name} 
+                  alt={productName} 
                 />
                 <span className='absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-700'>
                   {item.category}
@@ -64,7 +69,7 @@ const AllProducts = ({page, setpage, activeSearch, category, priceRange},) => {
               <div className='flex-1 flex flex-col justify-between p-4'>
                 <div className='space-y-2'>
                   <h3 className='text-gray-900 font-medium text-base leading-tight line-clamp-2'>
-                    {item.name}
+                    {productName}
                   </h3>
                   <p className='text-2xl font-bold text-gray-900'>
                     Rs. {item.price}
