@@ -29,7 +29,7 @@ const getGoogleRedirectUri = () => {
 
 const getFrontendLoginSuccessUrl = () => {
   const frontendBase = (ENV.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
-  return `${frontendBase}/login?success=true`
+  return `${frontendBase}/`
 }
 
 export const getGoogleAuthUrl = () => {
