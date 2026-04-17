@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_BASE_URL = (import.meta.env.VITE_BASE_URL || 'https://campuskartai.onrender.com/api').replace(/\/$/, '')
+const API_BASE_URL = (import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api').replace(/\/$/, '')
 
 export const addToCart=async(payload)=>{
     const res = await axios.post(`${API_BASE_URL}/cart/addToCart`,

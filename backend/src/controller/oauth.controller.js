@@ -3,15 +3,17 @@ import jwt from 'jsonwebtoken'
 import { ENV } from '../config/env.js'
 import { sendWelcomeEmail } from '../config/smtp.js'
 
+const isProduction = Boolean((ENV.FRONTEND_URL || ENV.BACKEND_URL || '').startsWith('https://'))
+
 const authCookieOptions = {
   maxAge: 1 * 24 * 60 * 60 * 1000,
   httpOnly: true,
-  sameSite: 'lax',
-  secure: false,
+  sameSite: isProduction ? 'none' : 'lax',
+  secure: isProduction,
 }
 
 const getGoogleRedirectUri = () => {
-  return ENV.GOOGLE_CALLBACK_URL || `${ENV.BACKEND_URL || 'http://localhost:3000'}/api/auth/google/callback`
+  return ENV.GOOGLE_CALLBACK_URL || `${ENV.BACKEND_URL || 'https://campuskartai.onrender.com'}/api/auth/google/callback`
 }
 
 const buildGoogleUserFromCode = async (code) => {

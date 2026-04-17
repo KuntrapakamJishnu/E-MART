@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_BASE_URL = (import.meta.env.VITE_BASE_URL || 'https://campuskartai.onrender.com/api').replace(/\/$/, '')
+const API_BASE_URL = (import.meta.env.VITE_BASE_URL || 'http://localhost:3000/api').replace(/\/$/, '')
 
 export const dashboardApi = async()=>{
     const res   = await axios.get(`${API_BASE_URL}/analytic/getDate`,

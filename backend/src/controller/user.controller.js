@@ -4,17 +4,19 @@ import jwt from 'jsonwebtoken'
 import { ENV } from "../config/env.js";
 import cloudinary from "../config/cloudinary.js";
 
+const isProduction = Boolean((ENV.FRONTEND_URL || ENV.BACKEND_URL || '').startsWith('https://'))
+
 const authCookieOptions = {
     maxAge: 1 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
 }
 
 const clearCookieOptions = {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
 }
 
 const getUserRole = (user) => {
