@@ -4,7 +4,7 @@ import { getOAuthUrlsApi } from '@/Api/auth.api'
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ShieldCheck, ArrowRight, Globe } from 'lucide-react'
+import { ShieldCheck, ArrowRight, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import loginHoodie from '@/assets/login-hoodie.png'
 import CompanyLogo from '@/assets/CompanyLogo.png'
@@ -55,8 +55,8 @@ const Login = () => {
             <div className='pointer-events-none absolute -left-24 top-8 h-72 w-72 rounded-full bg-amber-400/12 blur-3xl' />
             <div className='pointer-events-none absolute right-0 bottom-20 h-80 w-80 rounded-full bg-blue-400/14 blur-3xl' />
 
-            <div className='relative flex min-h-screen items-center justify-center px-6 py-10'>
-                <div className='w-full max-w-md'>
+            <div className='relative flex min-h-screen items-center justify-center px-5 py-8 sm:px-6 sm:py-10'>
+                <div className='w-full max-w-lg'>
                     <div className='mb-8 flex justify-center'>
                         <div className='h-24 w-24 overflow-hidden rounded-[30px] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.42)] ring-1 ring-white/25 sm:h-28 sm:w-28 md:h-32 md:w-32'>
                             <img src={CompanyLogo} alt='Company logo' className='h-full w-full object-cover' />
@@ -66,23 +66,27 @@ const Login = () => {
                     <div>
                         <div className='relative overflow-hidden rounded-[36px] border border-white/15 bg-[linear-gradient(160deg,rgba(255,255,255,0.18),rgba(255,255,255,0.05))] p-1 shadow-[0_35px_95px_rgba(2,6,23,0.58)] animate-zoom-soft'>
                             <div className='pointer-events-none absolute -inset-[2px] rounded-[38px] bg-[conic-gradient(from_0deg,rgba(245,158,11,0.45),rgba(59,130,246,0.32),rgba(249,115,22,0.35),rgba(245,158,11,0.45))] opacity-60 blur-md' />
-                            <div className='relative overflow-hidden rounded-[34px] border border-white/15 bg-slate-950/70 p-8 backdrop-blur-2xl sm:p-10'>
+                            <div className='relative overflow-hidden rounded-[34px] border border-white/15 bg-slate-950/70 p-6 backdrop-blur-2xl sm:p-8'>
+                                <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-100/85'>
+                                    <Sparkles className='h-3.5 w-3.5' />
+                                    Trusted Campus Commerce
+                                </div>
                                 <div className='mb-6 flex items-start justify-between gap-4'>
                                     <div>
                                         <p className='text-xs uppercase tracking-[0.34em] text-white/45'>Welcome back</p>
-                                        <h2 className='mt-2 text-3xl font-black tracking-[-0.05em] text-white'>Login</h2>
-                                        <p className='mt-2 text-sm text-white/72'>Pick up where you left off and continue shopping.</p>
+                                        <h2 className='mt-2 text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl'>Login</h2>
+                                        <p className='mt-2 max-w-md text-sm leading-6 text-white/72'>Access your account to manage orders, discover products, and continue your marketplace journey.</p>
                                     </div>
                                 </div>
 
-                                <form onSubmit={handleSubmit(loginHandler)} className='space-y-4'>
-                                    <div className='space-y-4'>
+                                <form onSubmit={handleSubmit(loginHandler)} className='space-y-5'>
+                                    <div className='space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5'>
                                         <div>
                                             <label className='mb-2 block text-xs font-semibold uppercase tracking-[0.28em] text-white/45'>Email</label>
                                             <input
                                                 type='email'
                                                 placeholder='you@example.com'
-                                                className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/35 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-sky-300/85 focus:bg-slate-900/50 focus:ring-2 focus:ring-sky-500/35'
+                                                className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/45 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-sky-300/85 focus:bg-slate-900/70 focus:ring-2 focus:ring-sky-500/35'
                                                 {...register('email')}
                                                 required
                                             />
@@ -93,7 +97,7 @@ const Login = () => {
                                             <input
                                                 type='password'
                                                 placeholder='••••••••'
-                                                className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/35 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-sky-300/85 focus:bg-slate-900/50 focus:ring-2 focus:ring-sky-500/35'
+                                                className='h-12 w-full rounded-xl border border-white/25 bg-slate-900/45 px-4 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-sky-300/85 focus:bg-slate-900/70 focus:ring-2 focus:ring-sky-500/35'
                                                 {...register('password')}
                                                 required
                                             />
@@ -106,14 +110,14 @@ const Login = () => {
                                         className='mt-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-blue-500 text-sm font-semibold text-white transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_18px_44px_rgba(245,158,11,0.35)] disabled:cursor-not-allowed disabled:opacity-70'
                                     >
                                         {isPending ? <Spinner /> : <>
-                                            Continue
+                                            Login
                                             <ArrowRight className='h-4 w-4' />
                                         </>}
                                     </button>
 
-                                    <div className='flex items-center gap-3 pt-2'>
+                                    <div className='flex items-center gap-3 pt-1'>
                                         <div className='h-px flex-1 bg-white/10' />
-                                        <span className='text-xs text-white/50'>OR</span>
+                                        <span className='text-[11px] font-medium uppercase tracking-[0.2em] text-white/45'>Or continue with Google</span>
                                         <div className='h-px flex-1 bg-white/10' />
                                     </div>
 
@@ -136,20 +140,31 @@ const Login = () => {
                                             }
                                         }}
                                         disabled={false}
-                                        className='inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/6 text-sm font-semibold text-white transition-all duration-300 hover:border-sky-200/60 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70'
+                                        className='inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/60 bg-white px-4 text-sm font-semibold text-slate-900 shadow-[0_8px_24px_rgba(255,255,255,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:shadow-[0_12px_32px_rgba(255,255,255,0.24)] disabled:cursor-not-allowed disabled:opacity-70'
                                     >
-                                        <Globe className='h-4 w-4' />
+                                        <svg viewBox='0 0 24 24' aria-hidden='true' className='h-5 w-5 shrink-0'>
+                                            <path fill='#EA4335' d='M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.5 14.6 2.5 12 2.5A9.5 9.5 0 0 0 2.5 12 9.5 9.5 0 0 0 12 21.5c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6z' />
+                                            <path fill='#34A853' d='M3.6 7.9 6.8 10.2C7.7 8.1 9.6 6.7 12 6.7c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.5 14.6 2.5 12 2.5c-3.7 0-6.9 2.1-8.4 5.4z' />
+                                            <path fill='#4A90E2' d='M12 21.5c2.5 0 4.6-.8 6.1-2.1l-2.8-2.3c-.8.5-1.8.8-3.3.8-3.9 0-5.3-2.6-5.6-3.9L3.2 16.4A9.5 9.5 0 0 0 12 21.5z' />
+                                            <path fill='#FBBC05' d='M3.2 16.4A9.4 9.4 0 0 1 2.5 12c0-1.5.4-2.9 1.1-4.1l3.2 2.3A5.7 5.7 0 0 0 6 12c0 .6.1 1.2.4 1.8z' />
+                                        </svg>
                                         Continue with Google
                                     </button>
 
+                                    <div className='flex items-center gap-3 pt-2'>
+                                        <div className='h-px flex-1 bg-white/10' />
+                                        <span className='text-xs text-white/50'>Secure Access</span>
+                                        <div className='h-px flex-1 bg-white/10' />
+                                    </div>
+
                                     <div className='grid gap-3 sm:grid-cols-2'>
-                                        <div className='rounded-2xl border border-white/10 bg-white/6 px-4 py-3 backdrop-blur-sm'>
+                                        <div className='rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm'>
                                             <p className='text-xs uppercase tracking-[0.28em] text-white/45'>Need an account?</p>
-                                            <Link to='/register' className='mt-2 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 transition hover:text-cyan-200'>
+                                            <Link to='/register' className='mt-3 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 transition hover:text-cyan-200'>
                                                 Sign up for free <ArrowRight className='h-4 w-4' />
                                             </Link>
                                         </div>
-                                        <div className='rounded-2xl border border-sky-300/20 bg-sky-500/10 px-4 py-3 backdrop-blur-sm'>
+                                        <div className='rounded-2xl border border-sky-300/20 bg-[linear-gradient(145deg,rgba(14,165,233,0.2),rgba(2,132,199,0.08))] px-4 py-4 backdrop-blur-sm'>
                                             <div className='flex items-center gap-2'>
                                                 <ShieldCheck className='h-4 w-4 text-sky-300' />
                                                 <span className='text-xs font-semibold uppercase tracking-[0.28em] text-white/55'>Secure & encrypted</span>
