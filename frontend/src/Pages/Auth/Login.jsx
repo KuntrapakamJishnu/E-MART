@@ -2,16 +2,19 @@ import { Spinner } from '@/components/ui/spinner'
 import { useLoginHook } from '@/hooks/user.hook'
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ShieldCheck, ArrowRight, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import loginHoodie from '@/assets/login-hoodie.png'
 import CompanyLogo from '@/assets/CompanyLogo.png'
+import { useGetProfileHook } from '@/hooks/user.hook'
 
 const Login = () => {
     const { register, handleSubmit } = useForm()
+    const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const { mutate, isPending } = useLoginHook()
+    const { data: profileData } = useGetProfileHook()
 
     const loginHandler = (data) => {
         mutate(data)
@@ -23,12 +26,19 @@ const Login = () => {
 
         if (oauthSuccess === 'true') {
             toast.success('Google login successful. Loading your session...')
+            navigate('/', { replace: true })
         }
 
         if (oauthError) {
             toast.error(decodeURIComponent(oauthError))
         }
-    }, [searchParams])
+    }, [navigate, searchParams])
+
+    useEffect(() => {
+        if (profileData) {
+            navigate('/', { replace: true })
+        }
+    }, [navigate, profileData])
 
     return (
         <div className='relative min-h-screen overflow-hidden bg-[#040712] text-white'>
