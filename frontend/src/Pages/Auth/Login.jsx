@@ -1,6 +1,5 @@
 import { Spinner } from '@/components/ui/spinner'
 import { useLoginHook } from '@/hooks/user.hook'
-import { getOAuthUrlsApi } from '@/Api/auth.api'
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -115,17 +114,14 @@ const Login = () => {
 
                                     <button
                                         type='button'
-                                        onClick={async () => {
+                                        onClick={() => {
                                             try {
-                                                const oauthData = await getOAuthUrlsApi()
-                                                const authUrl = oauthData?.google
+                                                const apiBase = (import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
+                                                const oauthEntry = apiBase.endsWith('/api')
+                                                    ? `${apiBase}/auth/google`
+                                                    : `${apiBase}/api/auth/google`
 
-                                                if (!authUrl) {
-                                                    alert('Google OAuth not configured. Please contact support.')
-                                                    return
-                                                }
-
-                                                window.location.href = authUrl
+                                                window.location.href = oauthEntry
                                             } catch (error) {
                                                 console.error('OAuth error:', error)
                                                 alert('Failed to initiate Google login')
