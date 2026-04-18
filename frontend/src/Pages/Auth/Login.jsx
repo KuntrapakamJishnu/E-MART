@@ -3,7 +3,7 @@ import { useLoginHook } from '@/hooks/user.hook'
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ShieldCheck, ArrowRight, Sparkles } from 'lucide-react'
+import { ShieldCheck, ArrowRight, Sparkles, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import loginHoodie from '@/assets/login_hoodie.png'
 import CompanyLogo from '@/assets/CompanyLogo.png'
@@ -69,7 +69,7 @@ const Login = () => {
                         const oauthResponse = await googleAuthCallbackApi({ accessToken: tokenResponse.access_token })
                         setAuthToken(oauthResponse?.token)
                         toast.success('Google login successful')
-                        navigate('/', { replace: true })
+                        navigate('/home', { replace: true })
                     } catch (error) {
                         console.error('Google popup auth failed:', error)
                         toast.error(error?.response?.data?.message || 'Google login failed')
@@ -96,7 +96,7 @@ const Login = () => {
 
         if (oauthSuccess === 'true') {
             toast.success('Google login successful. Loading your session...')
-            navigate('/', { replace: true })
+            navigate('/home', { replace: true })
         }
 
         if (oauthError) {
@@ -106,7 +106,7 @@ const Login = () => {
 
     useEffect(() => {
         if (profileData) {
-            navigate('/', { replace: true })
+            navigate('/home', { replace: true })
         }
     }, [navigate, profileData])
 
@@ -118,6 +118,16 @@ const Login = () => {
             <div className='pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.22)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.22)_1px,transparent_1px)] [background-size:32px_32px]' />
             <div className='pointer-events-none absolute -left-24 top-8 h-72 w-72 rounded-full bg-amber-400/12 blur-3xl' />
             <div className='pointer-events-none absolute right-0 bottom-20 h-80 w-80 rounded-full bg-blue-400/14 blur-3xl' />
+
+            <div className='absolute left-4 top-4 z-20 sm:left-6 sm:top-6'>
+                <Link
+                    to='/'
+                    className='inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:bg-white/15'
+                >
+                    <ChevronLeft className='h-3.5 w-3.5' />
+                    Welcome
+                </Link>
+            </div>
 
             <div className='relative flex min-h-screen items-center justify-center px-5 py-8 sm:px-6 sm:py-10'>
                 <div className='w-full max-w-6xl lg:grid lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10'>

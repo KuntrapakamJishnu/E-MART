@@ -27,7 +27,7 @@ const OAuthCallback = () => {
   useEffect(() => {
     if (data) {
       toast.success('Google login successful')
-      navigate('/', { replace: true })
+      navigate('/home', { replace: true })
       return
     }
 

@@ -156,7 +156,7 @@ const CartPage = () => {
 				key: orderData.key,
 				amount: orderData.amount,
 				currency: orderData.currency,
-				name: 'E-MART',
+				name: 'CampusKartAI',
 				description: 'Secure checkout',
 				order_id: orderData.orderId,
 				prefill: {

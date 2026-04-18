@@ -6,7 +6,7 @@ const FeaturedProducts = ({ item }) => {
   const cardRef = useRef(null)
   const navigate = useNavigate()
   const { mutate: addToCart, isPending: addToCartPending } = useAddToCartHook()
-  const imageSrc = item?.imageUrl || item?.image || 'https://via.placeholder.com/600x600?text=E-Mart'
+  const imageSrc = item?.imageUrl || item?.image || 'https://via.placeholder.com/600x600?text=CampusKartAI'
   const productId = item?._id
   const [showFullDescription, setShowFullDescription] = useState(false)
 
@@ -64,7 +64,7 @@ const FeaturedProducts = ({ item }) => {
             decoding="async"
             alt={item?.name || 'Product'}
             onError={(event) => {
-              event.currentTarget.src = 'https://via.placeholder.com/600x600?text=E-Mart'
+              event.currentTarget.src = 'https://via.placeholder.com/600x600?text=CampusKartAI'
             }}
           />
           <div className="absolute left-4 top-4 z-20 rounded-full bg-black/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white">

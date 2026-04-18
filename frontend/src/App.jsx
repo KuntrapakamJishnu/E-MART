@@ -8,7 +8,7 @@ const App = () => {
 
   const location = useLocation()
   const hiddenRoute = ['/login', '/register','/dashboard','/purchase', '/ai-assistant']
-  const shouldHideNavbar = hiddenRoute.some((route)=>location.pathname.startsWith(route))
+  const shouldHideNavbar = location.pathname === '/' || hiddenRoute.some((route)=>location.pathname.startsWith(route))
   return (
     <div className='app-shell'>
       <div className='app-noise' />

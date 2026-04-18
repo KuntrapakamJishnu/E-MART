@@ -76,12 +76,12 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   Featured Products
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   Special Offers
                 </Link>
               </li>
@@ -92,32 +92,32 @@ const Footer = () => {
             <h3 className='text-white text-sm font-semibold mb-4 uppercase tracking-[0.32em]'>Customer Service</h3>
             <ul className='space-y-3'>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   Shipping Information
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   Returns & Exchange
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   Track Your Order
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-sm hover:text-white transition-colors'>
+                <Link to='/home' className='text-sm hover:text-white transition-colors'>
                   Size Guide
                 </Link>
               </li>
@@ -160,12 +160,12 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-slate-500 hover:text-white transition-colors'>
+                <Link to='/home' className='text-slate-500 hover:text-white transition-colors'>
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link to='/' className='text-slate-500 hover:text-white transition-colors'>
+                <Link to='/home' className='text-slate-500 hover:text-white transition-colors'>
                   Cookie Policy
                 </Link>
               </li>

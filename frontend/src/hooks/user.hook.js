@@ -18,7 +18,7 @@ export const useRegisterHook = ()=>{
             toast.success(data.message)
             setAuthToken(data?.token || null)
             setUser(data.user)
-            navigate('/')
+            navigate('/home')
         },
         onError:(err)=>{
             toast.error(getErrorMessage(err, 'Registration failed'))
@@ -39,7 +39,7 @@ export const useLoginHook = ()=>{
             setAuthToken(data?.token || null)
             setUser(data.user)
             queryClient.invalidateQueries({ queryKey: ['getUser'] })
-            navigate('/')
+            navigate('/home')
         },
         onError:(err)=>{
             toast.error(getErrorMessage(err, 'Login failed'))

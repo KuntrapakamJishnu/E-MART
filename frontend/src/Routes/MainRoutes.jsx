@@ -1,10 +1,11 @@
 import React, { Suspense, lazy } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './Protectedroutes'
 
 const Login = lazy(() => import('@/Pages/Auth/Login'))
 const Register = lazy(() => import('@/Pages/Auth/Register'))
 const OAuthCallback = lazy(() => import('@/Pages/Auth/OAuthCallback'))
+const Welcome = lazy(() => import('@/Pages/Auth/Welcome'))
 const Home = lazy(() => import('@/Pages/User/Home'))
 const Profile = lazy(() => import('@/Pages/User/Profile'))
 const Product = lazy(() => import('@/Pages/User/Product'))
@@ -34,11 +35,7 @@ const MainRoutes = () => {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-          <Route path='/' element={
-              <ProtectedRoute>
-                  <Home/>
-              </ProtectedRoute>
-          }/>
+          <Route path='/' element={<Welcome/>}/>
           <Route path='/home' element={
               <ProtectedRoute>
                   <Home/>

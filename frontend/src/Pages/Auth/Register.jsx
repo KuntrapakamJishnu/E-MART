@@ -91,14 +91,13 @@ const Register = () => {
                         <div className='relative overflow-hidden rounded-[34px] border border-white/15 bg-slate-950/72 p-1 shadow-[0_35px_95px_rgba(2,6,23,0.58)] animate-zoom-soft'>
                             <div className='pointer-events-none absolute -inset-[2px] rounded-[36px] bg-[conic-gradient(from_0deg,rgba(20,184,166,0.4),rgba(14,165,233,0.34),rgba(59,130,246,0.32),rgba(20,184,166,0.4))] opacity-60 blur-md' />
                             <div className='relative overflow-hidden rounded-[32px] border border-white/15 bg-[linear-gradient(160deg,rgba(255,255,255,0.16),rgba(255,255,255,0.05))] p-6 backdrop-blur-2xl sm:p-8'>
-                                <button
-                                    type='button'
-                                    onClick={() => navigate(-1)}
+                                <Link
+                                    to='/'
                                     className='mb-4 inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:bg-white/15'
                                 >
                                     <ChevronLeft className='h-3.5 w-3.5' />
-                                    Back
-                                </button>
+                                    Welcome
+                                </Link>
                                 <div className='mb-5 inline-flex items-center gap-2 rounded-full border border-teal-300/25 bg-teal-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-100/85'>
                                     <Sparkles className='h-3.5 w-3.5' />
                                     Quick OTP Registration

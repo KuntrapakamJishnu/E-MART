@@ -32,14 +32,14 @@ const Navbar = () => {
   const profileImage = user?.profilePicture || user?.profilePhoto
   const role = user?.role || (user?.owner ? 'admin' : 'student')
   const canOpenDashboard = role === 'admin' || (role === 'seller' && user?.isApproved)
-  const isHomePage = location.pathname === '/' || location.pathname === '/home'
+  const isHomePage = location.pathname === '/home'
   const navHeightClass = isHomePage ? 'h-32 sm:h-36' : 'h-24 sm:h-28'
   const mobileMenuTopClass = isHomePage ? 'top-[8.5rem]' : 'top-[6.5rem]'
   const logoSizeClass = isHomePage
     ? 'h-24 w-24 rounded-[30px] sm:h-28 sm:w-28 md:h-32 md:w-32'
     : 'h-16 w-16 rounded-[22px] sm:h-20 sm:w-20'
   const navLinks = [
-    { to: '/', label: 'Home' },
+    { to: '/home', label: 'Home' },
     { to: '/product', label: 'Products' },
     { to: '/orders', label: 'Orders' },
     { to: '/placements', label: 'Placements' },
@@ -63,7 +63,7 @@ const Navbar = () => {
       <div className='absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-fuchsia-500 via-cyan-500 to-emerald-400 bg-[length:200%_200%] animate-sweep' />
       <div className='max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8'>
         <div className={`flex ${navHeightClass} items-center justify-between gap-4`}>
-          <Link to={'/'} className='group flex items-center'>
+          <Link to={'/home'} className='group flex items-center'>
             <div className={`${logoSizeClass} overflow-hidden bg-white shadow-lg ring-1 ring-slate-200 transition-transform duration-300 group-hover:scale-105`}>
               <img src={CompanyLogo} alt='Company logo' className='h-full w-full object-cover' />
             </div>

@@ -100,7 +100,7 @@ const Home = () => {
   useEffect(() => {
     const heroImage = new Image()
     heroImage.fetchPriority = 'high'
-    heroImage.src = 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1280&q=65'
+    heroImage.src = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1280&q=65'
   }, [])
 
   return (
@@ -110,7 +110,7 @@ const Home = () => {
           <div
             className='absolute inset-0 -z-10 bg-cover bg-center'
             style={{
-              backgroundImage: "url('https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1280&q=65')"
+              backgroundImage: "url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1280&q=65')"
             }}
           />
           <div className='absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.82)_0%,rgba(2,6,23,0.52)_42%,rgba(2,6,23,0.24)_100%)]' />
@@ -146,7 +146,7 @@ const Home = () => {
               <Reveal delay={120}>
                 <div className='overflow-hidden rounded-[28px] border border-white/10 bg-white/10 shadow-[0_18px_50px_rgba(2,6,23,0.35)] backdrop-blur-xl'>
                   <img
-                    src='https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=720&q=65'
+                    src='https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=720&q=65'
                     alt='Clothing display one'
                     className='h-48 w-full object-cover'
                     loading='lazy'
@@ -157,7 +157,7 @@ const Home = () => {
               <Reveal delay={220}>
                 <div className='overflow-hidden rounded-[28px] border border-white/10 bg-white/10 shadow-[0_18px_50px_rgba(2,6,23,0.35)] backdrop-blur-xl'>
                   <img
-                    src='https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=720&q=65'
+                    src='https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=720&q=65'
                     alt='Clothing display two'
                     className='h-48 w-full object-cover'
                     loading='lazy'
